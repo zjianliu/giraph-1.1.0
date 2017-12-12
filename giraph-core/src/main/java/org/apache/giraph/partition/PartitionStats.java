@@ -34,6 +34,9 @@ public class PartitionStats implements Writable {
   private long vertexCount = 0;
   /** Finished vertices in this partition */
   private long finishedVertexCount = 0;
+  /**added by zjliu:computedVertexCount**/
+  /** computed vertices in this partition */
+  private long computedVertexCount = 0;
   /** Edges in this partition */
   private long edgeCount = 0;
   /** Messages sent from this partition */
@@ -41,11 +44,14 @@ public class PartitionStats implements Writable {
   /** Message byetes sent from this partition */
   private long messageBytesSentCount = 0;
 
+
+
   /**
    * Default constructor for reflection.
    */
   public PartitionStats() { }
 
+  /**added by zjliu:vertexComputedCount**/
   /**
    * Constructor with the initial stats.
    *
@@ -59,12 +65,14 @@ public class PartitionStats implements Writable {
   public PartitionStats(int partitionId,
       long vertexCount,
       long finishedVertexCount,
+      long computedVertexCount,
       long edgeCount,
       long messagesSentCount,
       long messageBytesSentCount) {
     this.partitionId = partitionId;
     this.vertexCount = vertexCount;
     this.finishedVertexCount = finishedVertexCount;
+    this.computedVertexCount = computedVertexCount;
     this.edgeCount = edgeCount;
     this.messagesSentCount = messagesSentCount;
     this.messageBytesSentCount = messageBytesSentCount;
@@ -121,6 +129,21 @@ public class PartitionStats implements Writable {
   }
 
   /**
+   * Increment the computed vertex count by one.
+   */
+  public void increComputedVertexCount() {
+    ++computedVertexCount;
+  }
+
+  /**
+   * Get the computed vertex count.
+   * @return Computed vertex count.
+     */
+  public long getComputedVertexCount() {
+    return computedVertexCount;
+  }
+
+  /**
    * Add edges to the edge count.
    *
    * @param edgeCount Number of edges to add.
@@ -174,11 +197,13 @@ public class PartitionStats implements Writable {
     return messageBytesSentCount;
   }
 
+
   @Override
   public void readFields(DataInput input) throws IOException {
     partitionId = input.readInt();
     vertexCount = input.readLong();
     finishedVertexCount = input.readLong();
+    computedVertexCount = input.readLong();
     edgeCount = input.readLong();
     messagesSentCount = input.readLong();
     messageBytesSentCount = input.readLong();
@@ -189,6 +214,7 @@ public class PartitionStats implements Writable {
     output.writeInt(partitionId);
     output.writeLong(vertexCount);
     output.writeLong(finishedVertexCount);
+    output.writeLong(computedVertexCount);
     output.writeLong(edgeCount);
     output.writeLong(messagesSentCount);
     output.writeLong(messageBytesSentCount);
