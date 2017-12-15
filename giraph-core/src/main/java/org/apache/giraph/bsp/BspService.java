@@ -189,7 +189,7 @@ public abstract class BspService<I extends WritableComparable,
   /** Class logger */
   private static final Logger LOG = Logger.getLogger(BspService.class);
   /** Path to the job's root */
-  protected final String basePath;
+  protected final String basePath;// /_hadoopBsp/job_201712130359_0001/
   /** Path to the job state determined by the master (informative only) */
   protected final String masterJobStatePath;
   /** ZooKeeper paths for mapping input splits. */
@@ -213,7 +213,7 @@ public abstract class BspService<I extends WritableComparable,
   /** Old checkpoint in case we want to restart some job */
   protected final String savedCheckpointBasePath;
   /** Path to the master election path */
-  protected final String masterElectionPath;
+  protected final String masterElectionPath; // /_hadoopBsp/job_201712130359_0001/_masterElectionDir
   /** If this path exists computation will be halted */
   protected final String haltComputationPath;
   /** Private ZooKeeper instance that implements the service */

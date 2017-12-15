@@ -205,7 +205,7 @@ public class BspServiceMaster<I extends WritableComparable,
   public BspServiceMaster(
       Mapper<?, ?, ?, ?>.Context context,
       GraphTaskManager<I, V, E> graphTaskManager) {
-    super(context, graphTaskManager);
+    super(context, graphTaskManager); // connect to zookeeper server.
     workerWroteCheckpoint = new PredicateLock(context);
     registerBspEvent(workerWroteCheckpoint);
     superstepStateChanged = new PredicateLock(context);
@@ -857,6 +857,9 @@ public class BspServiceMaster<I extends WritableComparable,
               Ids.OPEN_ACL_UNSAFE,
               CreateMode.EPHEMERAL_SEQUENTIAL,
               true);
+      if (LOG.isInfoEnabled()) {
+        LOG.info("becomeMaster: create myBid :'" + myBid);
+      }
     } catch (KeeperException e) {
       throw new IllegalStateException(
           "becomeMaster: KeeperException", e);

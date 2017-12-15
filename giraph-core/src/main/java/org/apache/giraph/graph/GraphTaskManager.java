@@ -212,10 +212,13 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
     ScriptLoader.loadScripts(conf);
     // One time setup for computation factory
     conf.createComputationFactory().initialize(conf);
+
     // Do some task setup (possibly starting up a Zookeeper service)
     context.setStatus("setup: Initializing Zookeeper services.");
     String serverPortList = conf.getZookeeperList();
     if (serverPortList.isEmpty()) {
+      //Instantiate and configure ZooKeeperManager for this job. Create some directories in HDFS, such as
+      //_bsp/_defaultZkManagerDir/jobId/_task or _zkServer or zkServerList_slave4 0
       if (startZooKeeperManager()) {
         return; // ZK connect/startup failed
       }
@@ -237,6 +240,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
     }
     try {
       instantiateBspService();
+      LOG.info("inistantiateBspService successfully!!!");
     } catch (IOException e) {
       LOG.error("setup: Caught exception just before end of setup", e);
       if (zkManager != null) {
@@ -413,6 +417,8 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
     throws IOException, InterruptedException {
     zkManager = new ZooKeeperManager(context, conf);
     context.setStatus("setup: Setting up Zookeeper manager.");
+    //Create some directories in HDFS, such as
+    //_bsp/_defaultZkManagerDir/jobId/_task or _zkServer or zkServerList_slave4 0
     zkManager.setup();
     if (zkManager.computationDone()) {
       done = true;
@@ -420,7 +426,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
     }
     zkManager.onlineZooKeeperServers();
     String serverPortList = zkManager.getZooKeeperServerPortString();
-    conf.setZookeeperList(serverPortList);
+    conf.setZookeeperList(serverPortList);//put the serverPortList into conf
     createZooKeeperCounter(serverPortList);
     return false;
   }

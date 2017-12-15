@@ -704,6 +704,7 @@ public class BspServiceWorker<I extends WritableComparable,
           new PartitionStats(partition.getId(),
               partition.getVertexCount(),
               0,
+              0,
               partition.getEdgeCount(),
               0, 0);
       partitionStatsList.add(partitionStats);

@@ -27,9 +27,9 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 
 /**
- * This mapper that will execute the BSP graph tasks alloted to this worker.
+ * This mapper that will execute the BSP graph tasks allocated to this worker.
  * All tasks will be performed by calling the GraphTaskManager object managed by
- * this GraphMapper wrapper classs. Since this mapper will
+ * this GraphMapper wrapper class. Since this mapper will
  * not be passing data by key-value pairs through the MR framework, the
  * Mapper parameter types are irrelevant, and set to <code>Object</code> type.
  *
@@ -90,7 +90,7 @@ public class GraphMapper<I extends WritableComparable, V extends Writable,
     try {
       setup(context);
       while (context.nextKeyValue()) {
-        graphTaskManager.execute();
+        graphTaskManager.execute(); // master service do nothing
       }
       cleanup(context);
       // Checkstyle exception due to needing to dump ZooKeeper failure

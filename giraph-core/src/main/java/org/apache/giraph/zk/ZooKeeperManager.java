@@ -78,17 +78,17 @@ public class ZooKeeperManager {
   /** Task partition, to ensure uniqueness */
   private final int taskPartition;
   /** HDFS base directory for all file-based coordination */
-  private final Path baseDirectory;
+  private final Path baseDirectory; //_bsp/_defaultZkManagerDir/job_201712130359_0001
   /**
    * HDFS task ZooKeeper candidate/completed
    * directory for all file-based coordination
    */
-  private final Path taskDirectory;
+  private final Path taskDirectory;//_bsp/_defaultZkManagerDir/job_201712130359_0001/_task
   /**
    * HDFS ZooKeeper server ready/done directory
    * for all file-based coordination
    */
-  private final Path serverDirectory;
+  private final Path serverDirectory; //_bsp/_defaultZkManagerDir/job_201712130359_0001/_zkServer
   /** HDFS path to whether the task is done */
   private final Path myClosedPath;
   /** Polling msecs timeout */
@@ -102,9 +102,10 @@ public class ZooKeeperManager {
   /** Thread that gets the zkProcess output */
   private StreamCollector zkProcessCollector = null;
   /** ZooKeeper local file system directory */
-  private final String zkDir;
+  private final String zkDir; // /usr/local/lib/hadoop-1.2.1/tmp/mapred/local/
+                              // taskTracker/hadoop/jobcache/job_201712130359_0001/work/_bspZooKeeper
   /** ZooKeeper config file path */
-  private final String configFilePath;
+  private final String configFilePath; // /zkDir/zoo.cfg
   /** ZooKeeper server list */
   private final Map<String, Integer> zkServerPortMap = Maps.newTreeMap();
   /** ZooKeeper base port */
