@@ -574,7 +574,8 @@ public class BspServiceWorker<I extends WritableComparable,
 
     // Add the partitions that this worker owns
     Collection<? extends PartitionOwner> masterSetPartitionOwners =
-        startSuperstep();
+        startSuperstep();  //这里的masterSetPartitionOwners包含了全体的partitionOwner信息，这里会等待master
+                          //assignPartitionOwners的完成
     workerGraphPartitioner.updatePartitionOwners(
         getWorkerInfo(), masterSetPartitionOwners);
 
@@ -804,12 +805,14 @@ public class BspServiceWorker<I extends WritableComparable,
     // 3. Wait until the partition assignment is complete and get it
     // 4. Get the aggregator values from the previous superstep
     if (getSuperstep() != INPUT_SUPERSTEP) {
-      workerServer.prepareSuperstep();
+      workerServer.prepareSuperstep(); //这里对应上面列表1
     }
 
-    registerHealth(getSuperstep());
+    registerHealth(getSuperstep());// 对应列表2，向master汇报本节点的健康，bspService下的checkWorkers会检查健康worker的数量是否满足要求
 
-    String addressesAndPartitionsPath =
+    //对应列表3，worker向master汇报完本节点健康后，等待master创建partitionOwner，在BspServiceMaster的assignPartitionOwners中
+    String addressesAndPartitionsPath =  // /_hadoopBsp/job_201712130359_0001/
+            // _applicationAttemptsDir/0/_superstepDir/-1/_addressesAndPartitions
         getAddressesAndPartitionsPath(getApplicationAttempt(),
             getSuperstep());
     AddressesAndPartitionsWritable addressesAndPartitions =
@@ -826,7 +829,8 @@ public class BspServiceWorker<I extends WritableComparable,
           addressesAndPartitionsPath,
           false,
           null,
-          addressesAndPartitions);
+          addressesAndPartitions);// 相关信息(masterInfo, chosenWorkerInfoList, partitionOwners)
+                                  // 读取到了addressAndPartitions中
     } catch (KeeperException e) {
       throw new IllegalStateException(
           "startSuperstep: KeeperException getting assignments", e);
@@ -1043,7 +1047,7 @@ public class BspServiceWorker<I extends WritableComparable,
       throw new RuntimeException(e);
     }
 
-    String finishedWorkerPath =
+    String finishedWorkerPath = // /_hadoopBsp/job_201712130359_0001/_applicationAttemptsDir/0/_superstepDir/-1/_workerFinishedDir
         getWorkerFinishedPath(getApplicationAttempt(), getSuperstep()) +
         "/" + getHostnamePartitionId();
     try {

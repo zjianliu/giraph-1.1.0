@@ -432,7 +432,8 @@ public class BspServiceMaster<I extends WritableComparable,
       long superstep,
       List<WorkerInfo> healthyWorkerInfoList,
       List<WorkerInfo> unhealthyWorkerInfoList) {
-    String healthyWorkerInfoPath =
+    String healthyWorkerInfoPath = // /_hadoopBsp/job_201712130359_0001/_applicationAttemptsDir/0
+            // /_superstepDir/-1/_workerHealthyDir
         getWorkerInfoHealthyPath(getApplicationAttempt(), superstep);
     String unhealthyWorkerInfoPath =
         getWorkerInfoUnhealthyPath(getApplicationAttempt(), superstep);
@@ -607,7 +608,8 @@ public class BspServiceMaster<I extends WritableComparable,
     // processes that have reported health exceeds the minimum percentage.
     // If the minimum percentage is not met, fail the job.  Otherwise
     // generate the input splits
-    String inputSplitsPath = inputSplitPaths.getPath();
+    String inputSplitsPath = inputSplitPaths.getPath(); // /_hadoopBsp/job_201712130359_0001/
+                                                        // _vertexInputSplitDir
     try {
       if (getZkExt().exists(inputSplitsPath, false) != null) {
         LOG.info(inputSplitsPath + " already exists, no need to create");
@@ -641,7 +643,7 @@ public class BspServiceMaster<I extends WritableComparable,
     // Note that the input splits may only be a sample if
     // INPUT_SPLIT_SAMPLE_PERCENT is set to something other than 100
     List<InputSplit> splitList = generateInputSplits(inputFormat,
-        minSplitCountHint, inputSplitType);
+        minSplitCountHint, inputSplitType); //InputSplit represents the data to be processed by an individual Mapper.
 
     if (splitList.isEmpty()) {
       LOG.fatal(logPrefix + ": Failing job due to 0 input splits, " +
@@ -673,7 +675,7 @@ public class BspServiceMaster<I extends WritableComparable,
       InputSplit inputSplit = splitList.get(i);
       taskExecutor.submit(new LogStacktraceCallable<Void>(
           new WriteInputSplit(inputFormat, inputSplit, inputSplitsPath, i,
-              writeLocations)));
+              writeLocations)));  //这里将split写入到zookeeper中。Task that writes a given input split to zookeeper.
     }
     taskExecutor.shutdown();
     ProgressableUtils.awaitExecutorTermination(taskExecutor, getContext());
@@ -1130,9 +1132,10 @@ public class BspServiceMaster<I extends WritableComparable,
   private void assignPartitionOwners() {
     Collection<PartitionOwner> partitionOwners;
     if (getSuperstep() == INPUT_SUPERSTEP) {
-      partitionOwners =
+      partitionOwners = //chosenWorkerInfoList 是健康的
           masterGraphPartitioner.createInitialPartitionOwners(
-              chosenWorkerInfoList, maxWorkers);
+              chosenWorkerInfoList, maxWorkers); //这里partitionOwners也会写入到
+                                            // masterGraphPartitioner对象的属性partitionOwnerList中
       if (partitionOwners.isEmpty()) {
         throw new IllegalStateException(
             "assignAndExchangePartitions: No partition owners set");
@@ -1170,7 +1173,7 @@ public class BspServiceMaster<I extends WritableComparable,
 
     // There will be some exchange of partitions
     if (!partitionOwners.isEmpty()) {
-      String vertexExchangePath =
+      String vertexExchangePath = //  /_hadoopBsp/job_201712130359_0001/_applicationAttemptsDir/0/_superstepDir/-1/_partitionExchangeDir
           getPartitionExchangePath(getApplicationAttempt(),
               getSuperstep());
       try {
@@ -1190,11 +1193,12 @@ public class BspServiceMaster<I extends WritableComparable,
       }
     }
 
-    // Workers are waiting for these assignments
+    // Workers are waiting for these assignments，在graphTaskManager.execute=>BspServiceWorker的startSuperstep中
     AddressesAndPartitionsWritable addressesAndPartitions =
         new AddressesAndPartitionsWritable(masterInfo, chosenWorkerInfoList,
             partitionOwners);
-    String addressesAndPartitionsPath =
+    String addressesAndPartitionsPath =    //_hadoopBsp/job_201712130359_0001/
+            // _applicationAttemptsDir/0/_superstepDir/-1/_addressesAndPartitions
         getAddressesAndPartitionsPath(getApplicationAttempt(),
             getSuperstep());
     WritableUtils.writeToZnode(
@@ -1314,7 +1318,7 @@ public class BspServiceMaster<I extends WritableComparable,
    *         failure
    */
   private boolean barrierOnWorkerList(String finishedWorkerPath,
-      List<WorkerInfo> workerInfoList,
+      List<WorkerInfo> workerInfoList,   //  /_hadoopBsp/job_201712130359_0001/_vertexInputSplitDoneDir
       BspEvent event,
       boolean ignoreDeath) {
     try {
@@ -1337,7 +1341,7 @@ public class BspServiceMaster<I extends WritableComparable,
     for (WorkerInfo workerInfo : workerInfoList) {
       hostnameIdList.add(workerInfo.getHostnameId());
     }
-    String workerInfoHealthyPath =
+    String workerInfoHealthyPath =  // /_hadoopBsp/job_201712130359_0001/_applicationAttemptsDir/0/_superstepDir/-1/_workerHealthyDir
         getWorkerInfoHealthyPath(getApplicationAttempt(), getSuperstep());
     List<String> finishedHostnameIdList;
     long nextInfoMillis = System.currentTimeMillis();
@@ -1479,7 +1483,7 @@ public class BspServiceMaster<I extends WritableComparable,
     // Coordinate the workers finishing sending their vertices/edges to the
     // correct workers and signal when everything is done.
     String logPrefix = "coordinate" + inputSplitsType + "InputSplits";
-    if (!barrierOnWorkerList(inputSplitPaths.getDonePath(),
+    if (!barrierOnWorkerList(inputSplitPaths.getDonePath(), // /_hadoopBsp/job_201712130359_0001/_vertexInputSplitDoneDir
         chosenWorkerInfoList,
         inputSplitEvents.getDoneStateChanged(),
         false)) {
@@ -1574,7 +1578,7 @@ public class BspServiceMaster<I extends WritableComparable,
       getContext().progress();
     }
 
-    chosenWorkerInfoList = checkWorkers();
+    chosenWorkerInfoList = checkWorkers();//这里返回的是健康的节点
     if (chosenWorkerInfoList == null) {
       setJobStateFailed("coordinateSuperstep: Not enough healthy workers for " +
                     "superstep " + getSuperstep());
@@ -1609,14 +1613,17 @@ public class BspServiceMaster<I extends WritableComparable,
 
     GiraphStats.getInstance().
         getCurrentWorkers().setValue(chosenWorkerInfoList.size());
-    assignPartitionOwners();
+
+
+    assignPartitionOwners();//master根据splits创建partitions，worker会等待图划分的完成
+
 
     // Finalize the valid checkpoint file prefixes and possibly
     // the aggregators.
     if (checkpointStatus != CheckpointStatus.NONE) {
       String workerWroteCheckpointPath =
           getWorkerWroteCheckpointPath(getApplicationAttempt(),
-              getSuperstep());
+              getSuperstep());  //_workerWroteCheckpointDir
       // first wait for all the workers to write their checkpoint data
       if (!barrierOnWorkerList(workerWroteCheckpointPath,
           chosenWorkerInfoList,
@@ -1644,6 +1651,8 @@ public class BspServiceMaster<I extends WritableComparable,
     if (getSuperstep() == INPUT_SUPERSTEP) {
       // Initialize aggregators before coordinating
       initializeAggregatorInputSuperstep();
+
+      //等待worker完成数据加载
       if (getConfiguration().hasMappingInputFormat()) {
         coordinateInputSplits(mappingInputSplitsPaths, mappingInputSplitsEvents,
             "Mapping");
@@ -2151,7 +2160,8 @@ public class BspServiceMaster<I extends WritableComparable,
         if (LOG.isDebugEnabled()) {
           LOG.debug("call: Created input split " +
               "with index " + index + " serialized as " +
-              byteArrayOutputStream.toString(Charset.defaultCharset().name()));
+              byteArrayOutputStream.toString(Charset.defaultCharset().name()) +
+                  "; The value writen to znode " + inputSplitPath + " is " + byteArrayOutputStream.toByteArray());
         }
       } catch (KeeperException.NodeExistsException e) {
         if (LOG.isInfoEnabled()) {

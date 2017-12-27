@@ -102,15 +102,19 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
         // First call to checkWorkers waits for all pending resources.
         // If these resources are still available at subsequent calls it just
         // reads zookeeper for the list of healthy workers.
-        bspServiceMaster.checkWorkers();
+
+        bspServiceMaster.checkWorkers(); // 循环检测直到满足数量的worker数
+
         initializeMillis = System.currentTimeMillis();
         GiraphTimers.getInstance().getInitializeMs().increment(
             initializeMillis - startMillis);
         // Attempt to create InputSplits if necessary. Bail out if that fails.
+        //master开始去创建InputSplits，worker在 startSuperstep中等待呢
         if (bspServiceMaster.getRestartedSuperstep() !=
             BspService.UNSET_SUPERSTEP ||
-            (bspServiceMaster.createMappingInputSplits() != -1 &&
-                bspServiceMaster.createVertexInputSplits() != -1 &&
+            (bspServiceMaster.createMappingInputSplits() != -1 && // 如果用户在命令行中没有提供对应的InputFormat，
+                                                                  // 返回0,如成功，返回inputSplit的个数
+                bspServiceMaster.createVertexInputSplits() != -1 && //这里会创建好splits  _vertexInputSplitDir => _vertexInputSplitsAllReady这两个都会创建成功
                 bspServiceMaster.createEdgeInputSplits() != -1)) {
           long setupMillis = System.currentTimeMillis() - initializeMillis;
           GiraphTimers.getInstance().getSetupMs().increment(setupMillis);
@@ -121,7 +125,11 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
             GiraphMetrics.get().resetSuperstepMetrics(cachedSuperstep);
             Class<? extends Computation> computationClass =
                 bspServiceMaster.getMasterCompute().getComputation();
-            superstepState = bspServiceMaster.coordinateSuperstep();
+            LOG.info("===============================================================");
+            LOG.info("The superstep " + bspServiceMaster.getSuperstep() + "starts....");
+            superstepState = bspServiceMaster.coordinateSuperstep(); //同步一个超步
+            LOG.info("The superstep " + bspServiceMaster.getSuperstep() + "ends....");
+            LOG.info("===============================================================");
             long superstepMillis = System.currentTimeMillis() -
                 startSuperstepMillis;
             superstepSecsMap.put(cachedSuperstep,

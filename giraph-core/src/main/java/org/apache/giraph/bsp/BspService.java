@@ -130,6 +130,8 @@ public abstract class BspService<I extends WritableComparable,
   /** Denotes that all the edge input splits are done. */
   public static final String EDGE_INPUT_SPLITS_ALL_DONE_NODE =
       "/_edgeInputSplitsAllDone";
+
+
   /** Directory of attempts of this application */
   public static final String APPLICATION_ATTEMPTS_DIR =
       "/_applicationAttemptsDir";
@@ -186,12 +188,15 @@ public abstract class BspService<I extends WritableComparable,
   /** Suffix denotes a master */
   public static final String MASTER_SUFFIX = "_master";
 
+
+
+
   /** Class logger */
   private static final Logger LOG = Logger.getLogger(BspService.class);
   /** Path to the job's root */
   protected final String basePath;// /_hadoopBsp/job_201712130359_0001/
   /** Path to the job state determined by the master (informative only) */
-  protected final String masterJobStatePath;
+  protected final String masterJobStatePath; // basePath/_masterJobState
   /** ZooKeeper paths for mapping input splits. */
   protected final InputSplitPaths mappingInputSplitsPaths;
   /** ZooKeeper paths for vertex input splits. */

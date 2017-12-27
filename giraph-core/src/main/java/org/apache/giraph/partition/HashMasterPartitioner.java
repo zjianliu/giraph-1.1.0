@@ -60,13 +60,13 @@ public class HashMasterPartitioner<I extends WritableComparable,
   @Override
   public Collection<PartitionOwner> createInitialPartitionOwners(
       Collection<WorkerInfo> availableWorkerInfos, int maxWorkers) {
-    int partitionCount = PartitionUtils.computePartitionCount(
+    int partitionCount = PartitionUtils.computePartitionCount( //计算partition数量
         availableWorkerInfos, maxWorkers, conf);
     List<PartitionOwner> ownerList = new ArrayList<PartitionOwner>();
     Iterator<WorkerInfo> workerIt = availableWorkerInfos.iterator();
     for (int i = 0; i < partitionCount; ++i) {
       PartitionOwner owner = new BasicPartitionOwner(i, workerIt.next());
-      if (!workerIt.hasNext()) {
+      if (!workerIt.hasNext()) { //partition数量较多，大于了worker的数量，再遍历一边worker来分配partition.
         workerIt = availableWorkerInfos.iterator();
       }
       ownerList.add(owner);

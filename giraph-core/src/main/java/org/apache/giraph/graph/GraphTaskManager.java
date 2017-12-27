@@ -281,7 +281,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
   * 5) Dump output.
   */
   public void execute() throws IOException, InterruptedException {
-    if (checkTaskState()) {
+    if (checkTaskState()) { //不是worker，返回true
       return;
     }
     preLoadOnWorkerObservers();

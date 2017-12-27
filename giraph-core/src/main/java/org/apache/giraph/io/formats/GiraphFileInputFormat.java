@@ -347,12 +347,16 @@ end[HADOOP_NON_SECURE]*/
    * @return The list of vertex input splits
    * @throws IOException
    */
-  public List<InputSplit> getVertexSplits(JobContext job) throws IOException {
+  public List<InputSplit> getVertexSplits(JobContext job) throws IOException, InterruptedException {
     List<FileStatus> files = listVertexStatus(job);
     List<InputSplit> splits = getSplits(job, files);
     // Save the number of input files in the job-conf
     job.getConfiguration().setLong(NUM_VERTEX_INPUT_FILES, files.size());
     LOG.debug("Total # of vertex splits: " + splits.size());
+    for(InputSplit split : splits){
+      LOG.info("split.getLocation:" + split.getLocations());
+      LOG.info("split.getLength:" + split.getLength());
+    }
     return splits;
   }
 
