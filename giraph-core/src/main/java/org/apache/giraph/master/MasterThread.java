@@ -128,7 +128,7 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
             LOG.info("===============================================================");
             LOG.info("The superstep " + bspServiceMaster.getSuperstep() + "starts....");
             superstepState = bspServiceMaster.coordinateSuperstep(); //同步一个超步
-            LOG.info("The superstep " + bspServiceMaster.getSuperstep() + "ends....");
+            LOG.info("The superstep " + (bspServiceMaster.getSuperstep() - 1) + "ends....");
             LOG.info("===============================================================");
             long superstepMillis = System.currentTimeMillis() -
                 startSuperstepMillis;
@@ -157,7 +157,7 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
                   bspServiceMaster.getLastGoodCheckpoint());
             }
             endMillis = System.currentTimeMillis();
-          }
+          }//while
           bspServiceMaster.setJobState(ApplicationState.FINISHED, -1, -1);
         }
       }

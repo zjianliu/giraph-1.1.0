@@ -101,12 +101,12 @@ public class InputSplitsHandler implements Watcher  {
     Stat reservedStat;
     while (true) {
       int splitToTry = currentIndex.getAndIncrement();
-      if (splitToTry >= pathList.size()) {
+      if (splitToTry >= pathList.size()) { ///_hadoopBsp/job_201712130359_0001/_vertexInputSplitDir/下的子目录
         return null;
       }
-      String nextSplitToClaim = pathList.get(splitToTry);
+      String nextSplitToClaim = pathList.get(splitToTry); ///_hadoopBsp/job_201712130359_0001/_vertexInputSplitDir/0
       context.progress();
-      String tmpInputSplitReservedPath =
+      String tmpInputSplitReservedPath = ///_hadoopBsp/job_201712130359_0001/_vertexInputSplitDir/0/_vertexInputSplitReserved
           nextSplitToClaim + inputSplitReservedNode;
       reservedStat =
           zooKeeper.exists(tmpInputSplitReservedPath, this);

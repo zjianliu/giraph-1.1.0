@@ -316,7 +316,7 @@ public class PartitionBalancer {
       WorkerInfo myWorkerInfo,
       Collection<? extends PartitionOwner> masterSetPartitionOwners) {
     partitionOwnerList.clear();
-    partitionOwnerList.addAll(masterSetPartitionOwners);
+    partitionOwnerList.addAll(masterSetPartitionOwners); //把partitionOwners复制给bspServiceWorker类中的workerGraphPartitioner
 
     Set<WorkerInfo> dependentWorkerSet = new HashSet<WorkerInfo>();
     Map<WorkerInfo, List<Integer>> workerPartitionOwnerMap =

@@ -239,7 +239,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
         GiraphConstants.DEFAULT_ZOOKEEPER_TICK_TIME);
     }
     try {
-      instantiateBspService();
+      instantiateBspService();//实例化 BspServiceMaster和BspServiceWorker
       LOG.info("inistantiateBspService successfully!!!");
     } catch (IOException e) {
       LOG.error("setup: Caught exception just before end of setup", e);
@@ -285,7 +285,9 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
       return;
     }
     preLoadOnWorkerObservers();
+    LOG.debug("*****************serviceWorker.setup() starts********************");
     finishedSuperstepStats = serviceWorker.setup();
+    LOG.debug("*****************serviceWorker.setup() ends**********************");
     if (collectInputSuperstepStats(finishedSuperstepStats)) {
       return;
     }
@@ -343,7 +345,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
         partitionStatsList, superstepTimerContext);
 
       // END of superstep compute loop
-    }
+    }//while
 
     if (LOG.isInfoEnabled()) {
       LOG.info("execute: BSP application done (global vertices marked done)");

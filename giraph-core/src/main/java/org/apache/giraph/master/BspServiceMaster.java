@@ -642,7 +642,9 @@ public class BspServiceMaster<I extends WritableComparable,
 
     // Note that the input splits may only be a sample if
     // INPUT_SPLIT_SAMPLE_PERCENT is set to something other than 100
-    List<InputSplit> splitList = generateInputSplits(inputFormat,
+
+    //*********这里是创建好的splitList,会将结果写入到/_hadoopBsp/job_201712130359_0001/_vertexInputSplitDir下的Znode值中
+       List<InputSplit> splitList = generateInputSplits(inputFormat,
         minSplitCountHint, inputSplitType); //InputSplit represents the data to be processed by an individual Mapper.
 
     if (splitList.isEmpty()) {
@@ -1318,7 +1320,7 @@ public class BspServiceMaster<I extends WritableComparable,
    *         failure
    */
   private boolean barrierOnWorkerList(String finishedWorkerPath,
-      List<WorkerInfo> workerInfoList,   //  /_hadoopBsp/job_201712130359_0001/_vertexInputSplitDoneDir
+      List<WorkerInfo> workerInfoList,   //  /_hadoopBsp/job_201712130359_0001/_applicationAttemptsDir/0/_superstepDir/-1/_workerFinishedDir
       BspEvent event,
       boolean ignoreDeath) {
     try {
@@ -1615,7 +1617,7 @@ public class BspServiceMaster<I extends WritableComparable,
         getCurrentWorkers().setValue(chosenWorkerInfoList.size());
 
 
-    assignPartitionOwners();//master根据splits创建partitions，worker会等待图划分的完成
+    assignPartitionOwners();//master创建partitions，worker会等待图划分的完成,master继续往前走
 
 
     // Finalize the valid checkpoint file prefixes and possibly
@@ -1730,6 +1732,7 @@ public class BspServiceMaster<I extends WritableComparable,
     String superstepFinishedNode =
         getSuperstepFinishedPath(getApplicationAttempt(), getSuperstep());
 
+    ///_hadoopBsp/job_201712130359_0001/_applicationAttemptsDir/0/_superstepDir/-1/_superstepFinished
     WritableUtils.writeToZnode(
         getZkExt(), superstepFinishedNode, -1, globalStats, superstepClasses);
     updateCounters(globalStats);

@@ -226,8 +226,10 @@ public class VertexInputSplitsCallable<I extends WritableComparable,
         }
       }
 
+      //根据vertexId获取其对应的partitionOwner
       PartitionOwner partitionOwner =
           bspServiceWorker.getVertexPartitionOwner(readerVertex.getId());
+      //把顶点发送到对应的partition上
       workerClientRequestProcessor.sendVertexRequest(
           partitionOwner, readerVertex);
       edgesSinceLastUpdate += readerVertex.getNumEdges();
@@ -261,7 +263,7 @@ public class VertexInputSplitsCallable<I extends WritableComparable,
         }
         break;
       }
-    }
+    }//while
 
     totalVerticesMeter.mark(inputSplitVerticesLoaded % VERTICES_UPDATE_PERIOD);
     totalEdgesMeter.mark(edgesSinceLastUpdate);
