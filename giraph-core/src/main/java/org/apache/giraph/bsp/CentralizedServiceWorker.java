@@ -68,6 +68,12 @@ public interface CentralizedServiceWorker<I extends WritableComparable,
   WorkerInfo getWorkerInfo();
 
   /**
+   * Intended to check whether the BSP application finished
+   * @return True if finished
+   */
+  boolean isApplicationFinished();
+
+  /**
    * Get the worker client (for instantiating WorkerClientRequestProcessor
    * instances.
    *

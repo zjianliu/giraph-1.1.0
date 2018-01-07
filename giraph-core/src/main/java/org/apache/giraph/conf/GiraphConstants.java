@@ -1164,6 +1164,13 @@ public interface GiraphConstants {
       new IntConfOption("giraph.async.message.store.threads", 0,
           "Number of threads to be used in async message store.");
 
+  /** The ip address:port of machine that used to monitor the giraph execution
+   */
+  StrConfOption MONITOR_MACHINE_IP_ADDRESS_PORT =
+          new StrConfOption("giraph.monitor.ip.addressport", "",
+                  "The ip address:port of machine that used to monitor " +
+                          "the giraph execution");
+
 
 }
 // CHECKSTYLE: resume InterfaceIsTypeCheck

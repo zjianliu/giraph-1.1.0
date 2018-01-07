@@ -3,14 +3,21 @@ package org.apache.giraph.monitor;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.apache.giraph.utils.SigarUtil;
+import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.util.Date;
 
 public class Monitor {
     private Sigar sigar;
+    private static final Logger LOG = Logger.getLogger(Monitor.class);
 
-    public Monitor() throws Exception{
-        sigar = SigarUtil.getSigar();
+    public Monitor() {
+        try {
+            sigar = SigarUtil.getSigar();
+        }catch (IOException e){
+            LOG.info("Monitor: initialization failed.");
+        }
     }
 
     public Metrics getMetrics() throws SigarException {

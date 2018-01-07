@@ -19,8 +19,10 @@
 package org.apache.giraph.graph;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -47,6 +49,8 @@ import org.apache.giraph.metrics.GiraphTimer;
 import org.apache.giraph.metrics.GiraphTimerContext;
 import org.apache.giraph.metrics.ResetSuperstepMetricsObserver;
 import org.apache.giraph.metrics.SuperstepMetricsRegistry;
+import org.apache.giraph.monitor.Metrics;
+import org.apache.giraph.monitor.Monitor;
 import org.apache.giraph.partition.Partition;
 import org.apache.giraph.partition.PartitionOwner;
 import org.apache.giraph.partition.PartitionStats;
@@ -55,11 +59,7 @@ import org.apache.giraph.scripting.ScriptLoader;
 import org.apache.giraph.utils.CallableFactory;
 import org.apache.giraph.utils.MemoryUtils;
 import org.apache.giraph.utils.ProgressableUtils;
-import org.apache.giraph.worker.BspServiceWorker;
-import org.apache.giraph.worker.InputSplitsCallable;
-import org.apache.giraph.worker.WorkerContext;
-import org.apache.giraph.worker.WorkerObserver;
-import org.apache.giraph.worker.WorkerProgress;
+import org.apache.giraph.worker.*;
 import org.apache.giraph.zk.ZooKeeperManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -71,6 +71,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.hyperic.sigar.SigarException;
 
 /**
  * The Giraph-specific business logic for a single BSP
@@ -151,6 +152,8 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
   private final Mapper<?, ?, ?, ?>.Context context;
   /** is this GraphTaskManager the master? */
   private boolean isMaster;
+  /** Thread used to monitor the system status of worker */
+  private WorkerMonitorThread<I, V, E> monitorThread;
 
   /**
    * Default constructor for GiraphTaskManager.
@@ -160,6 +163,49 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
   public GraphTaskManager(Mapper<?, ?, ?, ?>.Context context) {
     this.context = context;
     this.isMaster = false;
+  }
+
+  /**
+   * get the monitor socket to send info to.
+   * @return Socket
+   * @throws IOException
+   */
+  public Socket getMonitorSocket() throws IOException{
+    String ipAndPort = conf.getMonitorAddressAndPort();
+    String ip = ipAndPort.split(":")[0];
+    int port = Integer.parseInt(ipAndPort.split(":")[1]);
+
+    Socket socket = new Socket(ip, port);
+    if (LOG.isInfoEnabled()) {
+      LOG.info("Socket: connect to " + ipAndPort + "successfully.");
+    }
+    return socket;
+  }
+
+  /**
+   * Get the system statistics of the current worker, such as CPU, Memory, Network
+   * @param monitor
+   * @return
+   * @throws SigarException
+   */
+  public String getWorkerSystemStatus(Monitor monitor) throws SigarException, UnknownHostException{
+    StringBuffer status = new StringBuffer();
+    Metrics metrics = monitor.getMetrics();
+    String hostName = conf.getLocalHostname();
+
+    //get the statistics of the system
+    long time = metrics.getTime().getTime() / 1000;
+    double cpuUser = metrics.getCpuUser();
+    double memoryUsage = metrics.getMemoryUsed() / metrics.getMemoryTotal();
+    int totalNetworkup = metrics.getTotalNetworkup();
+    int totalNetworkdown = metrics.getTotalNetworkdown();
+
+    status.append("giraph." + hostName + ".cpuUser " + cpuUser  + " " + time + "\n");
+    status.append("giraph." + hostName + ".memoryUsage " + memoryUsage + " " + time + "\n");
+    status.append("giraph." + hostName + ".totalNetworkup " + totalNetworkup + " " + time + "\n");
+    status.append("giraph." + hostName + ".totalNetworkdown " + totalNetworkdown + " " + time);
+
+    return status.toString();
   }
 
   /**
@@ -284,9 +330,11 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
     if (checkTaskState()) { //不是worker，返回true
       return;
     }
+
     preLoadOnWorkerObservers();
+
     LOG.debug("*****************serviceWorker.setup() starts********************");
-    finishedSuperstepStats = serviceWorker.setup();
+    finishedSuperstepStats = serviceWorker.setup();  //return: Finished superstep stats for the input superstep
     LOG.debug("*****************serviceWorker.setup() ends**********************");
     if (collectInputSuperstepStats(finishedSuperstepStats)) {
       return;
@@ -359,6 +407,9 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
    */
   private void postApplication() throws IOException, InterruptedException {
     GiraphTimerContext postAppTimerContext = wcPostAppTimer.time();
+
+    if(serviceWorker instanceof BspServiceWorker)
+      ((BspServiceWorker)serviceWorker).setApplicationFinished(true);
     serviceWorker.getWorkerContext().postApplication();
     serviceWorker.getSuperstepOutput().postApplication();
     postAppTimerContext.stop();

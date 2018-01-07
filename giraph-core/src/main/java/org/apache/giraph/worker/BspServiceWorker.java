@@ -21,6 +21,7 @@ package org.apache.giraph.worker;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.Socket;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,6 +80,8 @@ import org.apache.giraph.metrics.GiraphTimerContext;
 import org.apache.giraph.metrics.ResetSuperstepMetricsObserver;
 import org.apache.giraph.metrics.SuperstepMetricsRegistry;
 import org.apache.giraph.metrics.WorkerSuperstepMetrics;
+import org.apache.giraph.monitor.Metrics;
+import org.apache.giraph.monitor.Monitor;
 import org.apache.giraph.partition.Partition;
 import org.apache.giraph.partition.PartitionExchange;
 import org.apache.giraph.partition.PartitionOwner;
@@ -112,6 +115,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
+import org.hyperic.sigar.SigarException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -179,6 +183,12 @@ public class BspServiceWorker<I extends WritableComparable,
   private GiraphTimer wcPostSuperstepTimer;
   /** Time spent waiting on requests to finish */
   private GiraphTimer waitRequestsTimer;
+  /** Thread used to monitor the system status of worker */
+  private WorkerMonitorThread<I, V, E> workerMonitorThread;
+  /** The ip address:port of machine that used to monitor the giraph execution */
+  private String MONITOR_MACHINE_IP_ADDRESS_PORT;
+  /** The BSP application finished? */
+  private boolean applicationFinished;
 
   /**
    * Constructor for setting up the worker.
@@ -228,6 +238,7 @@ public class BspServiceWorker<I extends WritableComparable,
       conf.addWorkerObserverClass(ReactiveJMapHistoDumper.class);
     }
     observers = conf.createWorkerObservers();
+    workerMonitorThread = new WorkerMonitorThread(this);
 
     WorkerProgress.get().setTaskId(getTaskPartition());
     workerProgressWriter = conf.trackJobProgressOnClient() ?
@@ -235,6 +246,9 @@ public class BspServiceWorker<I extends WritableComparable,
         null;
 
     GiraphMetrics.get().addSuperstepResetObserver(this);
+
+    MONITOR_MACHINE_IP_ADDRESS_PORT = conf.getMonitorAddressAndPort();
+    applicationFinished = false;
   }
 
   @Override
@@ -266,6 +280,56 @@ public class BspServiceWorker<I extends WritableComparable,
 
   public TranslateEdge<I, E> getTranslateEdge() {
     return translateEdge;
+  }
+
+  /**
+   * get the monitor socket to send info to.
+   * @return Socket
+   * @throws IOException
+   */
+  public Socket getMonitorSocket() throws IOException{
+    String ip = MONITOR_MACHINE_IP_ADDRESS_PORT.split(":")[0];
+    int port = Integer.parseInt(MONITOR_MACHINE_IP_ADDRESS_PORT.split(":")[1]);
+
+    Socket socket = new Socket(ip, port);
+    if (LOG.isInfoEnabled()) {
+      LOG.info("Socket: connect to " + MONITOR_MACHINE_IP_ADDRESS_PORT + "successfully.");
+    }
+    return socket;
+  }
+
+  /**
+   * Get the system statistics of the current worker, such as CPU, Memory, Network
+   * @param monitor
+   * @return
+   * @throws SigarException
+   */
+  public String getWorkerSystemStatus(Monitor monitor) throws SigarException{
+    StringBuffer status = new StringBuffer();
+    Metrics metrics = monitor.getMetrics();
+
+    //get the statistics of the current worker
+    long time = metrics.getTime().getTime() / 1000;
+    double cpuUser = metrics.getCpuUser();
+    double memoryUsage = metrics.getMemoryUsed() / metrics.getMemoryTotal();
+    int totalNetworkup = metrics.getTotalNetworkup();
+    int totalNetworkdown = metrics.getTotalNetworkdown();
+
+    status.append("giraph." + getHostname() + ".cpuUser " + cpuUser  + " " + time + "\n");
+    status.append("giraph." + getHostname() + ".memoryUsage " + memoryUsage + " " + time + "\n");
+    status.append("giraph." + getHostname() + ".totalNetworkup " + totalNetworkup + " " + time + "\n");
+    status.append("giraph." + getHostname() + ".totalNetworkdown " + totalNetworkdown + " " + time);
+
+    return status.toString();
+  }
+
+  public void setApplicationFinished(boolean finished){
+    this.applicationFinished = finished;
+  }
+
+  @Override
+  public boolean isApplicationFinished(){
+    return applicationFinished;
   }
 
   /**
@@ -542,6 +606,7 @@ public class BspServiceWorker<I extends WritableComparable,
     // 4. Wait until the INPUT_SPLIT_ALL_DONE_PATH node has been created
     // 5. Process any mutations deriving from add edge requests
     // 6. Wait for superstep INPUT_SUPERSTEP to complete.
+
     if (getRestartedSuperstep() != UNSET_SUPERSTEP) {
       setCachedSuperstep(getRestartedSuperstep());
       return new FinishedSuperstepStats(0, false, 0, 0, true,
@@ -804,8 +869,11 @@ public class BspServiceWorker<I extends WritableComparable,
     // 2. Register my health for the next superstep.
     // 3. Wait until the partition assignment is complete and get it
     // 4. Get the aggregator values from the previous superstep
+
+
     if (getSuperstep() != INPUT_SUPERSTEP) {
       workerServer.prepareSuperstep(); //这里对应上面列表1
+      // Prepare incoming messages for computation, and resolve mutation requests.
     }
 
     registerHealth(getSuperstep());// 对应列表2，向master汇报本节点的健康，bspService下的checkWorkers会检查健康worker的数量是否满足要求

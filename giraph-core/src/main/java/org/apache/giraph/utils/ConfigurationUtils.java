@@ -130,6 +130,8 @@ public final class ConfigurationUtils {
         " -ca <param1>=<value1>,<param2>=<value2> -ca <param3>=<value3> etc." +
         " It can appear multiple times, and the last one has effect" +
         " for the same param.");
+    OPTIONS.addOption("mm", "monitorMachine", true, "the ip address:port of machine" +
+            "that used to monitor the giraph execution");
   }
 
   /**
@@ -441,6 +443,9 @@ public final class ConfigurationUtils {
         }
       }
     }
+    if(cmd.hasOption("mm")){
+      conf.setMonitorAddressAndPort(cmd.getOptionValue("mm"));
+    }
 
     // YARN-ONLY OPTIONS
     if (cmd.hasOption("yj")) {
@@ -450,6 +455,8 @@ public final class ConfigurationUtils {
       conf.setYarnTaskHeapMb(
           Integer.parseInt(cmd.getOptionValue("yh")));
     }
+
+
     /*if[PURE_YARN]
     if (cmd.hasOption("vof") || cmd.hasOption("eof")) {
       if (cmd.hasOption("op")) {
