@@ -1,6 +1,8 @@
 package org.apache.giraph.worker;
 
 import net.iharder.Base64;
+import org.apache.giraph.bsp.BspService;
+import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.monitor.Monitor;
 import org.apache.giraph.partition.PartitionStats;
 import org.apache.giraph.utils.WritableUtils;
@@ -19,87 +21,97 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
         E extends Writable> extends Thread {
     private final Logger LOG = Logger.getLogger(WorkerMonitorThread.class);
 
-    private BspServiceWorker<I, V, E> bspServiceWorker;
+    private GraphTaskManager<I, V, E> graphTaskManager;
+    private BspService<I, V, E> bspService;
 
-    public WorkerMonitorThread(BspServiceWorker<I, V, E> bspServiceWorker){
-        this.bspServiceWorker = bspServiceWorker;
+    public WorkerMonitorThread(GraphTaskManager<I, V, E> graphTaskManager, BspService<I, V, E> bspService){
+        this.graphTaskManager = graphTaskManager;
+        this.bspService = bspService;
     }
 
     @Override
     public void run() {
         try{
-            Socket socket = bspServiceWorker.getMonitorSocket();
-            String hostname = bspServiceWorker.getHostname();
+            if(LOG.isInfoEnabled()){
+                LOG.info("WorkerMonitorThread starts to monitor the giraph system.");
+            }
+            Socket socket = graphTaskManager.getMonitorSocket();
             final PrintWriter pw = new PrintWriter(socket.getOutputStream());
-            long superstep = -2;
-
 
 
             Monitor monitor = new Monitor();
+
+            /*
             //the time the current superstep starts
-            long startSecond = System.currentTimeMillis() / 1000;
-            long superStepSecond;
-            long intervalSecond;
+            double startSecond = System.currentTimeMillis() / 1000d;
+            double superStepSecond;
+            double intervalSecond;
+            long superstep = -2;
+            */
 
-            while(!bspServiceWorker.isApplicationFinished()){
-                long currentSuperstep = bspServiceWorker.getSuperstep();
-                if(superstep != currentSuperstep){
-                    superstep = currentSuperstep;
-                    startSecond = System.currentTimeMillis() / 1000;
-                }
-
-                superStepSecond = System.currentTimeMillis() / 1000;
-                String systemStatus = bspServiceWorker.getWorkerSystemStatus(monitor);
+            while(!graphTaskManager.isApplicationFinished()){
+                String systemStatus = graphTaskManager.getWorkerSystemStatus(monitor);
                 pw.println(systemStatus);
                 pw.flush();
 
-                String finishedWorkerPathDir = bspServiceWorker.getWorkerFinishedPath(bspServiceWorker.getApplicationAttempt(),
-                        bspServiceWorker.getSuperstep());
-                String currentFinishedWorkerPath = finishedWorkerPathDir + bspServiceWorker.getHostnamePartitionId();
-                try{
-                    List<String> finishedHostnameIdList = bspServiceWorker.getZkExt().getChildrenExt(finishedWorkerPathDir,
-                            true,
-                            false,
-                            false);
-                    for(String finishedHostnameId : finishedHostnameIdList){
-                        intervalSecond = superStepSecond - startSecond;
-                        if(finishedHostnameId.equals(currentFinishedWorkerPath)){
-                            long workerSentMessages = 0;
-                            long workerSentMessageBytes = 0;
-                            long workerComputedVertex = 0;
+                /*
+                if(graphTaskManager.getGraphFunctions().isWorker()) {
+                    long currentSuperstep = bspService.getSuperstep();
+                    if(superstep != currentSuperstep){
+                        superstep = currentSuperstep;
+                        startSecond = System.currentTimeMillis() / 1000d;
+                    }
 
-                            byte[] zkData = bspServiceWorker.getZkExt().getData(finishedHostnameId, false, null);
-                            JSONObject workerFinishedInfoObj = new JSONObject(new String(zkData, Charset.defaultCharset()));
-                            List<PartitionStats> statsList =
-                                    WritableUtils.readListFieldsFromByteArray(
-                                            Base64.decode(workerFinishedInfoObj.getString(
-                                                    bspServiceWorker.JSONOBJ_PARTITION_STATS_KEY)),
-                                            new PartitionStats().getClass(),
-                                            bspServiceWorker.getConfiguration());
-                            for(PartitionStats partitionStats : statsList){
-                                workerComputedVertex += partitionStats.getComputedVertexCount();
-                                workerSentMessageBytes += partitionStats.getMessageBytesSentCount();
-                                workerSentMessages += partitionStats.getMessagesSentCount();
+                    superStepSecond = System.currentTimeMillis() / 1000d;
+                    String finishedWorkerPathDir = bspService.getWorkerFinishedPath(bspService.getApplicationAttempt(),
+                            bspService.getSuperstep());
+                    String currentFinishedWorkerPath = finishedWorkerPathDir + bspService.getHostnamePartitionId();
+                    try {
+                        List<String> finishedHostnameIdList = bspService.getZkExt().getChildrenExt(finishedWorkerPathDir,
+                                true,
+                                false,
+                                false);
+                        for (String finishedHostnameId : finishedHostnameIdList) {
+                            intervalSecond = superStepSecond - startSecond;
+                            if (finishedHostnameId.equals(currentFinishedWorkerPath)) {
+                                long workerSentMessages = 0;
+                                long workerSentMessageBytes = 0;
+                                long workerComputedVertex = 0;
+
+                                byte[] zkData = bspService.getZkExt().getData(finishedHostnameId, false, null);
+                                JSONObject workerFinishedInfoObj = new JSONObject(new String(zkData, Charset.defaultCharset()));
+                                List<PartitionStats> statsList =
+                                        WritableUtils.readListFieldsFromByteArray(
+                                                Base64.decode(workerFinishedInfoObj.getString(
+                                                        bspService.JSONOBJ_PARTITION_STATS_KEY)),
+                                                new PartitionStats().getClass(),
+                                                bspService.getConfiguration());
+                                for (PartitionStats partitionStats : statsList) {
+                                    workerComputedVertex += partitionStats.getComputedVertexCount();
+                                    workerSentMessageBytes += partitionStats.getMessageBytesSentCount();
+                                    workerSentMessages += partitionStats.getMessagesSentCount();
+                                }
+
+                                PartitionStatusReport report = new PartitionStatusReport(workerComputedVertex, workerSentMessages,
+                                        workerSentMessageBytes, intervalSecond, superStepSecond, bspService.getHostname(), pw);
+                                report.start();
+                                break;
                             }
-
-                            PartitionStatusReport report = new PartitionStatusReport(workerComputedVertex, workerSentMessages,
-                                    workerSentMessageBytes, intervalSecond, superStepSecond, hostname, pw);
-                            report.start();
-                            break;
+                        }
+                    } catch (KeeperException e) {
+                        if (LOG.isInfoEnabled()) {
+                            LOG.info("WorkerMonitorThread: KeeperException - Couldn't get " +
+                                    "children of " + finishedWorkerPathDir);
                         }
                     }
-                } catch (KeeperException e){
-                    if(LOG.isInfoEnabled()){
-                        LOG.info("WorkerMonitorThread: KeeperException - Couldn't get " +
-                        "children of " + finishedWorkerPathDir);
-                    }
                 }
-                Thread.sleep(500);
+                */
+                Thread.sleep(200);
             }
             socket.shutdownOutput();
             socket.close();
 
-        }catch (Exception e){
+        } catch (Exception e){
             if(LOG.isInfoEnabled()) {
                 LOG.info("WorkerMonitorThread: run failed.");
             }
@@ -113,8 +125,8 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
         private long workerComputedVertex;
         private long workerSentMessages;
         private long workerSentMessageBytes;
-        private long intervalSecond;
-        private long endTime;
+        private double intervalSecond;
+        private double endTime;
         private String hostname;
         private  PrintWriter pw;
 
@@ -129,7 +141,7 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
          * @param pw the printWriter used to send the info to the socket server
          */
         public PartitionStatusReport(long workerComputedVertex, long workerSentMessages,
-                                     long workerSentMessageBytes, long intervalSecond, long endTime,
+                                     long workerSentMessageBytes, double intervalSecond, double endTime,
                                      String hostname, PrintWriter pw){
             this.workerComputedVertex = workerComputedVertex;
             this.workerSentMessages = workerSentMessages;

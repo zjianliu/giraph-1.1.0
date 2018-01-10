@@ -170,16 +170,21 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
    * @return Socket
    * @throws IOException
    */
-  public Socket getMonitorSocket() throws IOException{
+  public Socket getMonitorSocket(){
     String ipAndPort = conf.getMonitorAddressAndPort();
     String ip = ipAndPort.split(":")[0];
     int port = Integer.parseInt(ipAndPort.split(":")[1]);
 
-    Socket socket = new Socket(ip, port);
-    if (LOG.isInfoEnabled()) {
-      LOG.info("Socket: connect to " + ipAndPort + "successfully.");
+    try {
+      Socket socket = new Socket(ip, port);
+      if (LOG.isInfoEnabled()) {
+        LOG.info("GraphTaskManager:Socket connects to " + ipAndPort + "successfully.");
+      }
+      return socket;
+    }catch (IOException e){
+      throw new IllegalStateException(
+              "getMonitor: IOException", e);
     }
-    return socket;
   }
 
   /**
@@ -188,24 +193,44 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
    * @return
    * @throws SigarException
    */
-  public String getWorkerSystemStatus(Monitor monitor) throws SigarException, UnknownHostException{
-    StringBuffer status = new StringBuffer();
-    Metrics metrics = monitor.getMetrics();
-    String hostName = conf.getLocalHostname();
+  public String getWorkerSystemStatus(Monitor monitor) {
+    try {
+      StringBuffer status = new StringBuffer();
+      Metrics metrics = monitor.getMetrics();
+      String hostName = conf.getLocalHostname();
 
-    //get the statistics of the system
-    long time = metrics.getTime().getTime() / 1000;
-    double cpuUser = metrics.getCpuUser();
-    double memoryUsage = metrics.getMemoryUsed() / metrics.getMemoryTotal();
-    int totalNetworkup = metrics.getTotalNetworkup();
-    int totalNetworkdown = metrics.getTotalNetworkdown();
+      //get the statistics of the system
+      long time = metrics.getTime().getTime() / 1000;
+      double cpuUser = metrics.getCpuUser();
+      double memoryUsage = metrics.getMemoryUsed() / metrics.getMemoryTotal();
+      int totalNetworkup = metrics.getTotalNetworkup();
+      int totalNetworkdown = metrics.getTotalNetworkdown();
 
-    status.append("giraph." + hostName + ".cpuUser " + cpuUser  + " " + time + "\n");
-    status.append("giraph." + hostName + ".memoryUsage " + memoryUsage + " " + time + "\n");
-    status.append("giraph." + hostName + ".totalNetworkup " + totalNetworkup + " " + time + "\n");
-    status.append("giraph." + hostName + ".totalNetworkdown " + totalNetworkdown + " " + time);
+      status.append("giraph." + hostName + ".cpuUser " + cpuUser + " " + time + "\n");
+      status.append("giraph." + hostName + ".memoryUsage " + memoryUsage + " " + time + "\n");
+      status.append("giraph." + hostName + ".totalNetworkup " + totalNetworkup + " " + time + "\n");
+      status.append("giraph." + hostName + ".totalNetworkdown " + totalNetworkdown + " " + time);
 
-    return status.toString();
+      if (LOG.isInfoEnabled()) {
+        LOG.info("getWorkerSystemStatus: " + status.toString());
+      }
+
+      return status.toString();
+    } catch (SigarException e){
+      throw new IllegalStateException(
+              "getWorkerSystemStatus: SigarException", e);
+    } catch (UnknownHostException e){
+      throw new IllegalStateException(
+              "getWorkerSystemStatus: UnknownHostException", e);
+    }
+  }
+
+  /**
+   * Intended to check whether the BSP application finished
+   * @return True if finished
+   */
+  public boolean isApplicationFinished(){
+    return done;
   }
 
   /**
@@ -407,9 +432,6 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
    */
   private void postApplication() throws IOException, InterruptedException {
     GiraphTimerContext postAppTimerContext = wcPostAppTimer.time();
-
-    if(serviceWorker instanceof BspServiceWorker)
-      ((BspServiceWorker)serviceWorker).setApplicationFinished(true);
     serviceWorker.getWorkerContext().postApplication();
     serviceWorker.getSuperstepOutput().postApplication();
     postAppTimerContext.stop();
@@ -654,20 +676,27 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
       if (LOG.isInfoEnabled()) {
         LOG.info("setup: Starting up BspServiceMaster " +
           "(master thread)...");
+        LOG.info("setup: Starting up monitor thread...");
       }
       serviceMaster = new BspServiceMaster<I, V, E>(context, this);
       masterThread = new MasterThread<I, V, E>(serviceMaster, context);
       masterThread.start();
+      monitorThread = new WorkerMonitorThread<I, V, E>(this, (BspService<I, V, E>) serviceMaster);
+      monitorThread.start();
     }
     if (graphFunctions.isWorker()) {
       if (LOG.isInfoEnabled()) {
         LOG.info("setup: Starting up BspServiceWorker...");
+        LOG.info("setup: Starting up monitor thread...");
       }
       serviceWorker = new BspServiceWorker<I, V, E>(context, this);
+      monitorThread = new WorkerMonitorThread<I, V, E>(this, (BspService<I, V, E>) serviceWorker);
+      monitorThread.start();
       if (LOG.isInfoEnabled()) {
         LOG.info("setup: Registering health of this worker...");
       }
     }
+
   }
 
   /**
@@ -993,6 +1022,17 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
 
     // Stop tracking metrics
     GiraphMetrics.get().shutdown();
+
+    done = true;
+    try {
+      if (monitorThread != null) {
+        monitorThread.join();
+        LOG.info("cleanup: Joined withe monitor thread");
+      }
+    } catch (InterruptedException e){
+      // cleanup phase -- just log the error
+      LOG.error("cleanup: monitor thread couldn't join");
+    }
   }
 
   /**

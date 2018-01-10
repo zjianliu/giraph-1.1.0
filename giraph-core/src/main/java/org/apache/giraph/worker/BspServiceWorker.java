@@ -183,12 +183,6 @@ public class BspServiceWorker<I extends WritableComparable,
   private GiraphTimer wcPostSuperstepTimer;
   /** Time spent waiting on requests to finish */
   private GiraphTimer waitRequestsTimer;
-  /** Thread used to monitor the system status of worker */
-  private WorkerMonitorThread<I, V, E> workerMonitorThread;
-  /** The ip address:port of machine that used to monitor the giraph execution */
-  private String MONITOR_MACHINE_IP_ADDRESS_PORT;
-  /** The BSP application finished? */
-  private boolean applicationFinished;
 
   /**
    * Constructor for setting up the worker.
@@ -238,7 +232,6 @@ public class BspServiceWorker<I extends WritableComparable,
       conf.addWorkerObserverClass(ReactiveJMapHistoDumper.class);
     }
     observers = conf.createWorkerObservers();
-    workerMonitorThread = new WorkerMonitorThread(this);
 
     WorkerProgress.get().setTaskId(getTaskPartition());
     workerProgressWriter = conf.trackJobProgressOnClient() ?
@@ -246,9 +239,6 @@ public class BspServiceWorker<I extends WritableComparable,
         null;
 
     GiraphMetrics.get().addSuperstepResetObserver(this);
-
-    MONITOR_MACHINE_IP_ADDRESS_PORT = conf.getMonitorAddressAndPort();
-    applicationFinished = false;
   }
 
   @Override
@@ -280,56 +270,6 @@ public class BspServiceWorker<I extends WritableComparable,
 
   public TranslateEdge<I, E> getTranslateEdge() {
     return translateEdge;
-  }
-
-  /**
-   * get the monitor socket to send info to.
-   * @return Socket
-   * @throws IOException
-   */
-  public Socket getMonitorSocket() throws IOException{
-    String ip = MONITOR_MACHINE_IP_ADDRESS_PORT.split(":")[0];
-    int port = Integer.parseInt(MONITOR_MACHINE_IP_ADDRESS_PORT.split(":")[1]);
-
-    Socket socket = new Socket(ip, port);
-    if (LOG.isInfoEnabled()) {
-      LOG.info("Socket: connect to " + MONITOR_MACHINE_IP_ADDRESS_PORT + "successfully.");
-    }
-    return socket;
-  }
-
-  /**
-   * Get the system statistics of the current worker, such as CPU, Memory, Network
-   * @param monitor
-   * @return
-   * @throws SigarException
-   */
-  public String getWorkerSystemStatus(Monitor monitor) throws SigarException{
-    StringBuffer status = new StringBuffer();
-    Metrics metrics = monitor.getMetrics();
-
-    //get the statistics of the current worker
-    long time = metrics.getTime().getTime() / 1000;
-    double cpuUser = metrics.getCpuUser();
-    double memoryUsage = metrics.getMemoryUsed() / metrics.getMemoryTotal();
-    int totalNetworkup = metrics.getTotalNetworkup();
-    int totalNetworkdown = metrics.getTotalNetworkdown();
-
-    status.append("giraph." + getHostname() + ".cpuUser " + cpuUser  + " " + time + "\n");
-    status.append("giraph." + getHostname() + ".memoryUsage " + memoryUsage + " " + time + "\n");
-    status.append("giraph." + getHostname() + ".totalNetworkup " + totalNetworkup + " " + time + "\n");
-    status.append("giraph." + getHostname() + ".totalNetworkdown " + totalNetworkdown + " " + time);
-
-    return status.toString();
-  }
-
-  public void setApplicationFinished(boolean finished){
-    this.applicationFinished = finished;
-  }
-
-  @Override
-  public boolean isApplicationFinished(){
-    return applicationFinished;
   }
 
   /**
