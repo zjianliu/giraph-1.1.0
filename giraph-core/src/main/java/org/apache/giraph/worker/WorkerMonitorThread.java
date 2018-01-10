@@ -113,7 +113,7 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
 
         } catch (Exception e){
             if(LOG.isInfoEnabled()) {
-                LOG.info("WorkerMonitorThread: run failed.");
+                LOG.info("WorkerMonitorThread run failed: " + e);
             }
         }
     }

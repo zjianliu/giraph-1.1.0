@@ -1,9 +1,11 @@
 package org.apache.giraph.utils;
 
+import com.google.common.io.Resources;
 import org.apache.log4j.Logger;
 import org.hyperic.sigar.Sigar;
 
 import java.io.*;
+import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -16,13 +18,14 @@ public class SigarUtil {
 
     public static Sigar getSigar() throws IOException{
         final Logger LOG = Logger.getLogger(SigarUtil.class);
-        String sigarFolderName = "src/main/resources/sigar_lib";
-        File sigarFolder = new File(sigarFolderName);
+        String ResourceSigarFolderName = "sigar_lib";
+        URL sigarFolderNameURL = Resources.getResource(ResourceSigarFolderName);
+        File sigarFolder = new File(sigarFolderNameURL.getFile());
 
         if (!sigarFolder.exists()) {
             sigarFolder.mkdir();
 
-            File file = new File("src/main/resources/sigar_lib.zip");
+            File file = new File(Resources.getResource("sigar_lib.zip").getFile());
             ZipFile sigarZip = new ZipFile(file);
 
             ZipInputStream zis = new ZipInputStream(new FileInputStream(file));
@@ -30,7 +33,7 @@ public class SigarUtil {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 System.out.println("decompress file :" + entry.getName());
-                File outFile = new File("src/main/resources/sigar_lib/" + entry.getName());
+                File outFile = new File(sigarFolderNameURL.getFile() + entry.getName());
                 BufferedInputStream bis = new BufferedInputStream(sigarZip.getInputStream(entry));
                 BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outFile));
 

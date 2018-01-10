@@ -17,6 +17,7 @@ public class Monitor {
             sigar = SigarUtil.getSigar();
         }catch (IOException e){
             LOG.info("Monitor: initialization failed.");
+            throw new IllegalStateException("Monitor: " + e);
         }
     }
 

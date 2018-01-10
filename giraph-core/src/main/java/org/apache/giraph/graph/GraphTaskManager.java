@@ -178,7 +178,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
     try {
       Socket socket = new Socket(ip, port);
       if (LOG.isInfoEnabled()) {
-        LOG.info("GraphTaskManager:Socket connects to " + ipAndPort + "successfully.");
+        LOG.info("GraphTaskManager:Socket connects to " + ipAndPort + " successfully.");
       }
       return socket;
     }catch (IOException e){
