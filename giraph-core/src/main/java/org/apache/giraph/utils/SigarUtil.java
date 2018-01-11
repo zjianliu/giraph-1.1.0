@@ -60,7 +60,10 @@ public class SigarUtil {
         System.setProperty("java.library.path", path);
         LOG.info("SigarUtil: java.library.path added!");
         LOG.info("SigarUtil: After set java.library.path, it is " + System.getProperty("java.library.path"));
-
+        if( (new File(sigarFolder.getCanonicalPath() + "/libsigar-amd64-linux.so")).exists())
+            LOG.info(sigarFolder.getCanonicalPath() + "exists!");
+        else
+            LOG.info(sigarFolder.getCanonicalPath() + "does not exist!");
         return new Sigar();
     }
 }
