@@ -55,9 +55,11 @@ public class SigarUtil {
             seperator = ";";
         else
             seperator = ":";
+        LOG.info("SigarUtil: Before set java.library.path, it is " + System.getProperty("java.library.path"));
         String path = System.getProperty("java.library.path") + seperator + sigarFolder.getCanonicalPath();
-        System.setProperty("java.library.path",path);
+        System.setProperty("java.library.path", path);
         LOG.info("SigarUtil: java.library.path added!");
+        LOG.info("SigarUtil: After set java.library.path, it is " + System.getProperty("java.library.path"));
 
         return new Sigar();
     }

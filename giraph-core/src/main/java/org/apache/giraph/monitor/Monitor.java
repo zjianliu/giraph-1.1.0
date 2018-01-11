@@ -21,7 +21,7 @@ public class Monitor {
         }
     }
 
-    public Metrics getMetrics() throws SigarException {
+    public Metrics getMetrics() throws SigarException, UnsatisfiedLinkError {
         double cpuUser = sigar.getCpuPerc().getUser();
         double memoryUsed = sigar.getMem().getActualUsed();
         long memoryTotal = sigar.getMem().getTotal();

@@ -218,10 +218,12 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
       return status.toString();
     } catch (SigarException e){
       throw new IllegalStateException(
-              "getWorkerSystemStatus: SigarException", e);
+              "getWorkerSystemStatus: SigarException ", e);
     } catch (UnknownHostException e){
       throw new IllegalStateException(
-              "getWorkerSystemStatus: UnknownHostException", e);
+              "getWorkerSystemStatus: UnknownHostException ", e);
+    } catch (UnsatisfiedLinkError e){
+      throw new IllegalStateException("getWorkerSystemStatus: UnsatisfiedLinkError " + e);
     }
   }
 
