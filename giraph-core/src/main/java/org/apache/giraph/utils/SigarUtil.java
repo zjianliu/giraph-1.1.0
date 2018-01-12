@@ -19,13 +19,15 @@ public class SigarUtil {
     public static Sigar getSigar() throws IOException{
         final Logger LOG = Logger.getLogger(SigarUtil.class);
 
-        String sigarFolderName = "/home/hadoop/lib/sigar_lib";
+        String userHome = System.getProperty("user.home");
+        String sigarFolderName = userHome + "/sigar_lib";
         File sigarFolder = new File(sigarFolderName);
 
         if(!sigarFolder.exists()){
             sigarFolder.mkdir();
 
-            InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("sigar_lib.zip");
+            InputStream is = SigarUtil.class.getResourceAsStream("sigar_lib.zip");
+            System.out.println("SigarUtil.class.getCanonicalName()" + SigarUtil.class.getCanonicalName());
             ZipInputStream zis = new ZipInputStream(is);
 
             ZipEntry entry;
@@ -56,7 +58,7 @@ public class SigarUtil {
         System.setProperty("java.library.path", path);
         LOG.info("SigarUtil: java.library.path added!");
         LOG.info("SigarUtil: After set java.library.path, it is " + System.getProperty("java.library.path"));
-        System.load(sigarFolder.getCanonicalPath() + "/libsigar-amd64-linux.so");
+        //System.load(sigarFolder.getCanonicalPath() + "/libsigar-amd64-linux.so");
         return new Sigar();
     }
 }
