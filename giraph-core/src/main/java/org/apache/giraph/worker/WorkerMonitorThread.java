@@ -8,6 +8,7 @@ import org.apache.giraph.partition.PartitionStats;
 import org.apache.giraph.utils.WritableUtils;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.json.JSONObject;
@@ -23,10 +24,13 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
 
     private GraphTaskManager<I, V, E> graphTaskManager;
     private BspService<I, V, E> bspService;
+    private Mapper<?, ?, ?, ?>.Context context;
 
-    public WorkerMonitorThread(GraphTaskManager<I, V, E> graphTaskManager, BspService<I, V, E> bspService){
+    public WorkerMonitorThread(GraphTaskManager<I, V, E> graphTaskManager, BspService<I, V, E> bspService,
+                               Mapper<?, ?, ?, ?>.Context context){
         this.graphTaskManager = graphTaskManager;
         this.bspService = bspService;
+        this.context = context;
     }
 
     @Override
@@ -39,7 +43,7 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
             final PrintWriter pw = new PrintWriter(socket.getOutputStream());
 
 
-            Monitor monitor = new Monitor();
+            Monitor monitor = new Monitor(context);
 
             /*
             //the time the current superstep starts

@@ -683,7 +683,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
       serviceMaster = new BspServiceMaster<I, V, E>(context, this);
       masterThread = new MasterThread<I, V, E>(serviceMaster, context);
       masterThread.start();
-      monitorThread = new WorkerMonitorThread<I, V, E>(this, (BspService<I, V, E>) serviceMaster);
+      monitorThread = new WorkerMonitorThread<I, V, E>(this, (BspService<I, V, E>) serviceMaster, context);
       monitorThread.start();
     }
     if (graphFunctions.isWorker()) {
@@ -692,7 +692,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
         LOG.info("setup: Starting up monitor thread...");
       }
       serviceWorker = new BspServiceWorker<I, V, E>(context, this);
-      monitorThread = new WorkerMonitorThread<I, V, E>(this, (BspService<I, V, E>) serviceWorker);
+      monitorThread = new WorkerMonitorThread<I, V, E>(this, (BspService<I, V, E>) serviceWorker, context);
       monitorThread.start();
       if (LOG.isInfoEnabled()) {
         LOG.info("setup: Registering health of this worker...");

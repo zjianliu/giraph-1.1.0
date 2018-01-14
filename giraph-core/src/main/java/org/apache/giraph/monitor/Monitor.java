@@ -1,5 +1,6 @@
 package org.apache.giraph.monitor;
 
+import org.apache.hadoop.mapreduce.Mapper;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.apache.giraph.utils.SigarUtil;
@@ -12,10 +13,14 @@ public class Monitor {
     private Sigar sigar;
     private static final Logger LOG = Logger.getLogger(Monitor.class);
 
-    public Monitor() {
+    public Monitor(Mapper<?, ?, ?, ?>.Context context) {
         try {
-            sigar = SigarUtil.getSigar();
-        }catch (IOException e){
+            //System.loadLibrary("libsigar-amd64-linux.so");
+            //sigar = new Sigar();
+            sigar = SigarUtil.getSigar(context);
+            if(sigar == null)
+                throw new NullPointerException("sigar is null!");
+        }catch (Exception e){
             LOG.info("Monitor: initialization failed.");
             throw new IllegalStateException("Monitor: " + e);
         }
