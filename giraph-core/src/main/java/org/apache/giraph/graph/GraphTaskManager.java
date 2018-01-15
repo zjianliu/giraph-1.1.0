@@ -211,10 +211,6 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
       status.append("giraph." + hostName + ".totalNetworkup " + totalNetworkup + " " + time + "\n");
       status.append("giraph." + hostName + ".totalNetworkdown " + totalNetworkdown + " " + time);
 
-      if (LOG.isInfoEnabled()) {
-        LOG.info("getWorkerSystemStatus: " + status.toString());
-      }
-
       return status.toString();
     } catch (SigarException e){
       throw new IllegalStateException(

@@ -34,33 +34,30 @@ public class SigarUtil {
 
             Configuration conf = context.getConfiguration();
             FileSystem fileSystem = FileSystem.get(URI.create("hdfs://master:9000"), conf);
-            Path path = new Path("/libraries/libsigar-amd64-linux.so");
+            Path path = new Path("/libraries/sigar_lib.zip");
             if(!fileSystem.exists(path)){
                 LOG.info(path.toString() + " does not exist!");
                 return null;
             }
+
             InputStream in = fileSystem.open(path);
-            File file = new File(sigarFolderName + "/libsigar-amd64-linux.so");
+            File file = new File(sigarFolderName + "/sigar_lib.zip");
             if(!file.exists()){
                 file.createNewFile();
             }
             OutputStream out = new FileOutputStream(file.getCanonicalFile());
             IOUtils.copyBytes(in, out, 4096, true);
 
-            /*
-            //System.out.println(Resources.getResource("sigar_lib.zip"));
-            ///usr/local/lib/hadoop-1.2.1/tmp/mapred/local/taskTracker/hadoop/jobcache/job_201801121423_0006/jars/sigar_lib.zip
-            //File file = new File(Resources.getResource("sigar_lib.zip").getFile());
-            //InputStream is = SigarUtil.class.getResourceAsStream("sigar_lib.zip");
-            //System.out.println("SigarUtil.class.getCanonicalName()" + SigarUtil.class.getCanonicalName());
-            ZipFile zip = new ZipFile(file);
+            ZipFile zipFile = new ZipFile(file);
             ZipInputStream zis = new ZipInputStream(new FileInputStream(file));
 
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                System.out.println("decompress file :" + entry.getName());
+                if(LOG.isInfoEnabled()) {
+                    LOG.info("decompress file :" + entry.getName());
+                }
                 File outFile = new File(sigarFolderName + "/" + entry.getName());
-                BufferedInputStream bis = new BufferedInputStream(zip.getInputStream(entry));
+                BufferedInputStream bis = new BufferedInputStream(zipFile.getInputStream(entry));
                 BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outFile));
 
                 byte[] buffer = new byte[1024];
@@ -74,7 +71,7 @@ public class SigarUtil {
                 bos.close();
             }
             zis.close();
-            */
+            file.delete();
         }
 
 
