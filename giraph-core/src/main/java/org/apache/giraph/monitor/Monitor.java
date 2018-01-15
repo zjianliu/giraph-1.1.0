@@ -15,11 +15,11 @@ public class Monitor {
 
     public Monitor(Mapper<?, ?, ?, ?>.Context context) {
         try {
-            //System.loadLibrary("libsigar-amd64-linux.so");
-            //sigar = new Sigar();
             sigar = SigarUtil.getSigar(context);
+
             if(sigar == null)
                 throw new NullPointerException("sigar is null!");
+
         }catch (Exception e){
             LOG.info("Monitor: initialization failed.");
             throw new IllegalStateException("Monitor: " + e);
