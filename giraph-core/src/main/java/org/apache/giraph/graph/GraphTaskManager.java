@@ -206,6 +206,11 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
       int totalNetworkup = metrics.getTotalNetworkup();
       int totalNetworkdown = metrics.getTotalNetworkdown();
 
+      LOG.info("metrics.getMemoryUsed: " + metrics.getMemoryUsed());
+      LOG.info("metrics.getMemoryTotal() " + metrics.getMemoryTotal());
+      LOG.info("Runtime.getRuntime().totalMemory(): " + Runtime.getRuntime().totalMemory());
+      LOG.info("Runtime.getRuntime().maxMemory(): " + Runtime.getRuntime().maxMemory());
+
       status.append("giraph." + hostName + ".cpuUser " + cpuUser + " " + time + "\n");
       status.append("giraph." + hostName + ".memoryUsage " + memoryUsage + " " + time + "\n");
       status.append("giraph." + hostName + ".totalNetworkup " + totalNetworkup + " " + time + "\n");
@@ -1025,7 +1030,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
     try {
       if (monitorThread != null) {
         monitorThread.join();
-        LOG.info("cleanup: Joined withe monitor thread");
+        LOG.info("cleanup: Joined with monitor thread");
       }
     } catch (InterruptedException e){
       // cleanup phase -- just log the error

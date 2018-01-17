@@ -102,8 +102,8 @@ public abstract class RandomWalkComputation<E extends Writable>
   }
 
   /**
-   * Returns the cumulative probability from dangling vertices.
-   * @return The cumulative probability from dangling vertices.
+   * Returns the cumulative probability assigned to all vertices.
+   * @return The cumulative probability assigned to all vertices.
    */
   protected double getPreviousCumulativeProbability() {
     return this.<DoubleWritable>getAggregatedValue(

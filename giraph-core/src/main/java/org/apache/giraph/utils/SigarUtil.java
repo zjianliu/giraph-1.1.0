@@ -33,7 +33,7 @@ public class SigarUtil {
             sigarFolder.mkdir();
 
             Configuration conf = context.getConfiguration();
-            FileSystem fileSystem = FileSystem.get(URI.create("hdfs://master:9000"), conf);
+            FileSystem fileSystem = FileSystem.get(conf);
             Path path = new Path("/libraries/sigar_lib.zip");
             if(!fileSystem.exists(path)){
                 LOG.info(path.toString() + " does not exist!");
