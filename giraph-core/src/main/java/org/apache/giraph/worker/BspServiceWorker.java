@@ -900,10 +900,12 @@ public class BspServiceWorker<I extends WritableComparable,
     long workerSentMessages = 0;
     long workerSentMessageBytes = 0;
     long localVertices = 0;
+    long computedVertices = 0;
     for (PartitionStats partitionStats : partitionStatsList) {
       workerSentMessages += partitionStats.getMessagesSentCount();
       workerSentMessageBytes += partitionStats.getMessageBytesSentCount();
       localVertices += partitionStats.getVertexCount();
+      computedVertices += partitionStats.getComputedVertexCount();
     }
 
     if (getSuperstep() != INPUT_SUPERSTEP) {
@@ -922,6 +924,8 @@ public class BspServiceWorker<I extends WritableComparable,
       LOG.info("finishSuperstep: Superstep " + getSuperstep() +
           ", messages = " + workerSentMessages + " " +
           ", message bytes = " + workerSentMessageBytes + " , " +
+          ", local vertices = " + localVertices + " , " +
+              ", computed vertices = " + computedVertices + " , " +
           MemoryUtils.getRuntimeMemoryStats());
     }
 
