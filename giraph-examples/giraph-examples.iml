@@ -46,6 +46,7 @@
     <orderEntry type="library" name="Maven: com.facebook.thirdparty.yourkit-api:yjp-controller-api-redist:11.0.10" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.findbugs:annotations:2.0.2" level="project" />
     <orderEntry type="library" name="Maven: com.yammer.metrics:metrics-core:2.2.0" level="project" />
+    <orderEntry type="library" name="Maven: com.yammer.metrics:metrics-graphite:2.2.0" level="project" />
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.1" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-all:4.0.14.Final" level="project" />
     <orderEntry type="library" name="Maven: net.iharder:base64:2.3.8" level="project" />

@@ -1,21 +1,15 @@
 package org.apache.giraph.worker;
 
-import net.iharder.Base64;
 import org.apache.giraph.bsp.BspService;
 import org.apache.giraph.graph.GraphTaskManager;
 import org.apache.giraph.monitor.Monitor;
-import org.apache.giraph.partition.PartitionStats;
-import org.apache.giraph.utils.WritableUtils;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.log4j.Logger;
-import org.apache.zookeeper.KeeperException;
-import org.json.JSONObject;
 
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.nio.charset.Charset;
 import java.util.List;
 
 public class WorkerMonitorThread<I extends WritableComparable, V extends Writable,
@@ -45,6 +39,7 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
 
             Monitor monitor = new Monitor(context);
 
+
             /*
             //the time the current superstep starts
             double startSecond = System.currentTimeMillis() / 1000d;
@@ -57,6 +52,7 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
                 String systemStatus = graphTaskManager.getWorkerSystemStatus(monitor);
                 pw.println(systemStatus);
                 pw.flush();
+
 
                 /*
                 if(graphTaskManager.getGraphFunctions().isWorker()) {
@@ -78,7 +74,7 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
                         for (String finishedHostnameId : finishedHostnameIdList) {
                             intervalSecond = superStepSecond - startSecond;
                             if (finishedHostnameId.equals(currentFinishedWorkerPath)) {
-                                long workerSentMessages = 0;
+                                long  = 0;
                                 long workerSentMessageBytes = 0;
                                 long workerComputedVertex = 0;
 
@@ -110,6 +106,7 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
                     }
                 }
                 */
+
                 Thread.sleep(1000);
             }
             socket.shutdownOutput();

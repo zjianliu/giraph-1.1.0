@@ -18,6 +18,7 @@
 
 package org.apache.giraph.metrics;
 
+import com.yammer.metrics.reporting.GraphiteReporter;
 import org.apache.giraph.conf.GiraphConfiguration;
 
 import com.yammer.metrics.core.Counter;
@@ -32,6 +33,7 @@ import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.reporting.ConsoleReporter;
 import com.yammer.metrics.reporting.JmxReporter;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -46,8 +48,8 @@ public class GiraphMetricsRegistry {
   private String type;
   /** Internal Yammer registry used */
   private final MetricsRegistry registry;
-  /** JmxReporter that send metrics to JMX */
-  private final JmxReporter jmxReporter;
+  /** GraphiteReporter that send metrics to graphite */
+  private final GraphiteReporter graphiteReporter;
 
   /**
    * Constructor
@@ -57,13 +59,13 @@ public class GiraphMetricsRegistry {
    * @param type String type name for metrics
    */
   protected GiraphMetricsRegistry(MetricsRegistry registry,
-      JmxReporter reporter, String groupName, String type) {
+      GraphiteReporter reporter, String groupName, String type) {
     this.registry = registry;
-    this.jmxReporter = reporter;
+    this.graphiteReporter = reporter;
     this.groupName = groupName;
     this.type = type;
-    if (jmxReporter != null) {
-      jmxReporter.start();
+    if (graphiteReporter != null) {
+      graphiteReporter.start(1,TimeUnit.SECONDS);
     }
   }
 
@@ -82,11 +84,17 @@ public class GiraphMetricsRegistry {
    * @param type String type to use for metrics.
    * @return new metrics registry
    */
-  public static GiraphMetricsRegistry createWithOptional(String groupName,
-    String type) {
+  public static GiraphMetricsRegistry createWithOptional(GiraphConfiguration conf,
+                String groupName, String type) throws IOException{
     MetricsRegistry registry = new MetricsRegistry();
-    return new GiraphMetricsRegistry(registry, new JmxReporter(registry),
-        groupName, type);
+
+    String hostAndPort = conf.getMonitorAddressAndPort();
+    String host = hostAndPort.split(":")[0];
+    int port = Integer.parseInt(hostAndPort.split(":")[1]);
+
+    GraphiteReporter graphiteReporter = new GraphiteReporter(registry, host, port, null);
+    return new GiraphMetricsRegistry(registry, graphiteReporter,
+            groupName, type);
   }
 
   /**
@@ -100,9 +108,13 @@ public class GiraphMetricsRegistry {
    * @return new metrics registry
    */
   public static GiraphMetricsRegistry create(GiraphConfiguration conf,
-    String groupName, String type) {
+    String groupName, String type) throws IOException{
     if (conf.metricsEnabled()) {
-      return createWithOptional(groupName, type);
+      String hostAndPort = conf.getMonitorAddressAndPort();
+      String host = hostAndPort.split(":")[0];
+      int port = Integer.parseInt(hostAndPort.split(":")[1]);
+
+      return createWithOptional(conf, groupName, type);
     } else {
       return createFake();
     }

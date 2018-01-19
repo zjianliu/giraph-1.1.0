@@ -138,9 +138,9 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
             Class<? extends Computation> computationClass =
                 bspServiceMaster.getMasterCompute().getComputation();
             LOG.info("===============================================================");
-            LOG.info("The superstep " + cachedSuperstep + "starts....");
+            LOG.info("The superstep " + cachedSuperstep + " starts....");
             superstepState = bspServiceMaster.coordinateSuperstep(); //同步一个超步
-            LOG.info("The superstep " + cachedSuperstep + "ends....");
+            LOG.info("The superstep " + cachedSuperstep + " ends....");
             LOG.info("===============================================================");
             long superstepMillis = System.currentTimeMillis() -
                 startSuperstepMillis;
@@ -157,8 +157,10 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
             if (superstepCounterOn) {
               String computationName = (computationClass == null) ?
                   null : computationClass.getSimpleName();
+              GiraphTimers.getInstance().getSuperstepStartMs(cachedSuperstep,
+                      computationName).increment(startSuperstepMillis);
               GiraphTimers.getInstance().getSuperstepMs(cachedSuperstep,
-                  computationName).increment(superstepMillis);
+                      computationName).increment(superstepMillis);
             }
 
             bspServiceMaster.postSuperstep();

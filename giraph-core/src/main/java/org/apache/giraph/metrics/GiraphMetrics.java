@@ -21,6 +21,7 @@ import org.apache.giraph.conf.GiraphConfiguration;
 
 import com.google.common.collect.Lists;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 
@@ -31,7 +32,7 @@ import static org.apache.giraph.bsp.BspService.INPUT_SUPERSTEP;
  */
 public class GiraphMetrics {
   /** Singleton instance for everyone to use */
-  private static GiraphMetrics INSTANCE = new GiraphMetrics();
+  private static GiraphMetrics INSTANCE;
 
   /** registry for per-superstep metrics */
   private final SuperstepMetricsRegistry perSuperstep;
@@ -47,23 +48,14 @@ public class GiraphMetrics {
       Lists.newArrayList();
 
   /**
-   * Initialize no-op registry that creates no-op metrics.
-   */
-  private GiraphMetrics() {
-    perJobOptional = GiraphMetricsRegistry.createFake();
-    perSuperstep = SuperstepMetricsRegistry.createFake();
-    perJobRequired = GiraphMetricsRegistry.createWithOptional("giraph", "job");
-  }
-
-  /**
    * Initialize GiraphMetrics with Hadoop Context
    *
    * @param conf GiraphConfiguration to use.
    */
-  private GiraphMetrics(GiraphConfiguration conf) {
+  private GiraphMetrics(GiraphConfiguration conf) throws IOException{
     perJobOptional = GiraphMetricsRegistry.create(conf, "giraph", "job");
     perSuperstep = SuperstepMetricsRegistry.create(conf, INPUT_SUPERSTEP);
-    perJobRequired = GiraphMetricsRegistry.createWithOptional("giraph", "job");
+    perJobRequired = GiraphMetricsRegistry.createWithOptional(conf,"giraph", "job");
   }
 
   /**
@@ -80,7 +72,7 @@ public class GiraphMetrics {
    *
    * @param conf GiraphConfiguration to use.
    */
-  public static void init(GiraphConfiguration conf) {
+  public static void init(GiraphConfiguration conf) throws IOException{
     INSTANCE = new GiraphMetrics(conf);
   }
 

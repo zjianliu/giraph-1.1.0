@@ -202,7 +202,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
       //get the statistics of the system
       long time = metrics.getTime().getTime() / 1000;
       double cpuUser = metrics.getCpuUser();
-      double memoryUsage = metrics.getMemoryUsed() / metrics.getMemoryTotal();
+      double memoryUsage = metrics.getMemoryUsed() / 1024d / 1024d;
       int totalNetworkup = metrics.getTotalNetworkup();
       int totalNetworkdown = metrics.getTotalNetworkdown();
 
@@ -477,7 +477,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
   /**
    * Utility to encapsulate Giraph metrics setup calls
    */
-  private void setupAndInitializeGiraphMetrics() {
+  private void setupAndInitializeGiraphMetrics() throws IOException{
     GiraphMetrics.init(conf);
     GiraphMetrics.get().addSuperstepResetObserver(this);
     initJobMetrics();
