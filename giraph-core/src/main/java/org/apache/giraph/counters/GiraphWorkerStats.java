@@ -5,7 +5,7 @@ import org.apache.hadoop.mapreduce.Mapper.Context;
 
 import java.net.UnknownHostException;
 
-public class GiraphWorkerStats extends HadoopCountersBase {
+public abstract class GiraphWorkerStats extends HadoopCountersBase {
     /** Counter group name for the giraph worker stats */
     public static String GROUP_NAME;
     /** sent messages counter name */
@@ -61,7 +61,7 @@ public class GiraphWorkerStats extends HadoopCountersBase {
      * @throws UnknownHostException
      */
     public static void init(Context context) throws UnknownHostException{
-        INSTANCE = new GiraphWorkerStats(context);
+        //INSTANCE = new GiraphWorkerStats(context);
     }
 
     /**

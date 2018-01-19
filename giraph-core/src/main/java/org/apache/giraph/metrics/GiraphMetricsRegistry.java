@@ -48,6 +48,8 @@ public class GiraphMetricsRegistry {
   private String type;
   /** Internal Yammer registry used */
   private final MetricsRegistry registry;
+
+
   /** GraphiteReporter that send metrics to graphite */
   private final GraphiteReporter graphiteReporter;
 
@@ -110,10 +112,6 @@ public class GiraphMetricsRegistry {
   public static GiraphMetricsRegistry create(GiraphConfiguration conf,
     String groupName, String type) throws IOException{
     if (conf.metricsEnabled()) {
-      String hostAndPort = conf.getMonitorAddressAndPort();
-      String host = hostAndPort.split(":")[0];
-      int port = Integer.parseInt(hostAndPort.split(":")[1]);
-
       return createWithOptional(conf, groupName, type);
     } else {
       return createFake();

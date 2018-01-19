@@ -61,6 +61,7 @@ public class SuperstepMetricsRegistry extends GiraphMetricsRegistry {
   public static SuperstepMetricsRegistry create(GiraphConfiguration conf,
       long superstep) throws IOException {
     if (conf.metricsEnabled()) {
+      String hostName = conf.getLocalHostname();
       String hostAndPort = conf.getMonitorAddressAndPort();
       String host = hostAndPort.split(":")[0];
       int port = Integer.parseInt(hostAndPort.split(":")[1]);
@@ -69,7 +70,7 @@ public class SuperstepMetricsRegistry extends GiraphMetricsRegistry {
       GraphiteReporter graphiteReporter = new GraphiteReporter(registry, host, port, null);
       SuperstepMetricsRegistry superstepMetrics = new SuperstepMetricsRegistry(
           registry, graphiteReporter,
-          "giraph.superstep", String.valueOf(superstep));
+          "giraph." + hostName +".superstep", String.valueOf(superstep));
       superstepMetrics.superstep = superstep;
       return superstepMetrics;
     } else {

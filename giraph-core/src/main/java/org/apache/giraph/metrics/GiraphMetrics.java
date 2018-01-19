@@ -53,9 +53,11 @@ public class GiraphMetrics {
    * @param conf GiraphConfiguration to use.
    */
   private GiraphMetrics(GiraphConfiguration conf) throws IOException{
-    perJobOptional = GiraphMetricsRegistry.create(conf, "giraph", "job");
+    String hostname = conf.getLocalHostname();
+    String groupname = "giraph." + hostname;
+    perJobOptional = GiraphMetricsRegistry.create(conf, groupname, "job");
     perSuperstep = SuperstepMetricsRegistry.create(conf, INPUT_SUPERSTEP);
-    perJobRequired = GiraphMetricsRegistry.createWithOptional(conf,"giraph", "job");
+    perJobRequired = GiraphMetricsRegistry.createWithOptional(conf, groupname, "job");
   }
 
   /**
