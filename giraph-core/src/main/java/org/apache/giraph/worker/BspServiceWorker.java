@@ -21,7 +21,6 @@ package org.apache.giraph.worker;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -98,8 +97,10 @@ import org.apache.giraph.utils.ReactiveJMapHistoDumper;
 import org.apache.giraph.utils.WritableUtils;
 import org.apache.giraph.zk.BspEvent;
 import org.apache.giraph.zk.PredicateLock;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
@@ -115,7 +116,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import org.hyperic.sigar.SigarException;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -919,7 +920,7 @@ public class BspServiceWorker<I extends WritableComparable,
     if (incomingMessageStore instanceof AsyncMessageStoreWrapper) {
       ((AsyncMessageStoreWrapper) incomingMessageStore).waitToComplete();
     }
-
+    //here we get the info
     if (LOG.isInfoEnabled()) {
       LOG.info("finishSuperstep: Superstep " + getSuperstep() +
           ", messages = " + workerSentMessages + " " +
@@ -927,6 +928,15 @@ public class BspServiceWorker<I extends WritableComparable,
           ", local vertices = " + localVertices + " , " +
               ", computed vertices = " + computedVertices + " , " +
           MemoryUtils.getRuntimeMemoryStats());
+    }
+
+    try {
+      writeIntoHDFS(getSuperstep(), workerSentMessages, workerSentMessageBytes,
+              localVertices, computedVertices);
+    } catch (IOException e){
+      if (LOG.isInfoEnabled()) {
+        LOG.info("Write the statistics into HDFS failed.");
+      }
     }
 
     if (superstepTimerContext != null) {
@@ -971,6 +981,39 @@ public class BspServiceWorker<I extends WritableComparable,
         globalStats.getEdgeCount(),
         false,
         globalStats.getCheckpointStatus());
+  }
+
+  /**
+   * Write the statics into HDFS.
+   * @param superstep
+   * @param workerSentMessages
+   * @param workerSentMessageBytes
+   * @param localVertices
+   * @param computedVertices
+   * @throws IOException
+   */
+  private void writeIntoHDFS(long superstep, long workerSentMessages, long workerSentMessageBytes,
+          long localVertices, long computedVertices) throws IOException{
+    ImmutableClassesGiraphConfiguration conf = getConfiguration();
+    String hostName = conf.getLocalHostname();
+    String fileName = "/giraphStatistics/" + hostName;
+
+    Path path = new Path(fileName);
+    FileSystem fileSystem = FileSystem.get(conf);
+    FSDataOutputStream outputStream;
+    if(!fileSystem.exists(path)){
+      outputStream = fileSystem.create(path);
+      outputStream.writeUTF("superstep\tSentMessages\tSentMessageBytes\tlocalVertices\tcomputedVertices\n");
+      outputStream.writeUTF(superstep + "\t" + workerSentMessages + "\t" + workerSentMessageBytes + "\t" +
+              localVertices + "\t" + computedVertices + "\n");
+    } else {
+      outputStream = fileSystem.append(path);
+      outputStream.writeUTF(superstep + "\t" + workerSentMessages + "\t" + workerSentMessageBytes + "\t" +
+              localVertices + "\t" + computedVertices + "\n");
+    }
+
+    outputStream.flush();
+    outputStream.close();
   }
 
   /**

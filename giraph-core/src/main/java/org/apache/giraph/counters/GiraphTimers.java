@@ -128,8 +128,7 @@ public class GiraphTimers extends HadoopCountersBase {
       if (superstep == -1) {
         counterPrefix = "Computation time : Input superstep";
       } else {
-        counterPrefix = "Computation time : Superstep " + superstep +
-            (computationName == null ? "" : " " + computationName);
+        counterPrefix = "Computation time : Superstep" + superstep;
       }
       counter = getCounter(counterPrefix + " (ms)");
       superstepMsec.put(superstep, counter);
@@ -152,8 +151,7 @@ public class GiraphTimers extends HadoopCountersBase {
       if (superstep == -1) {
         counterPrefix = "Start time : Input superstep";
       } else {
-        counterPrefix = "Start time : Superstep " + superstep +
-                (computationName == null ? "" : " " + computationName);
+        counterPrefix = "Start time : Superstep " + superstep;
       }
       counter = getCounter(counterPrefix + " (ms)");
       superstepStartMsec.put(superstep, counter);

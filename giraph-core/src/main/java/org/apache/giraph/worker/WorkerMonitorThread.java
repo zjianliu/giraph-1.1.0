@@ -48,18 +48,20 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
 
 
 
+            /*
             //the time the current superstep starts
             double startSecond = System.currentTimeMillis() / 1000d;
             double superStepSecond;
             double intervalSecond;
             long superstep = -2;
-
+            */
 
             while(!graphTaskManager.isApplicationFinished()){
                 String systemStatus = graphTaskManager.getWorkerSystemStatus(monitor);
                 pw.println(systemStatus);
                 pw.flush();
 
+                /*
                 if(graphTaskManager.getGraphFunctions().isWorker()) {
                     long currentSuperstep = bspService.getSuperstep();
                     if(superstep != currentSuperstep){
@@ -110,6 +112,7 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
                         }
                     }
                 }
+                */
 
 
                 Thread.sleep(1000);
