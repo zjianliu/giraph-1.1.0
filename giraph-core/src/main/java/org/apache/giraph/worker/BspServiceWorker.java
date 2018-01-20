@@ -923,10 +923,10 @@ public class BspServiceWorker<I extends WritableComparable,
     //here we get the info
     if (LOG.isInfoEnabled()) {
       LOG.info("finishSuperstep: Superstep " + getSuperstep() +
-          ", messages = " + workerSentMessages + " " +
-          ", message bytes = " + workerSentMessageBytes + " , " +
-          ", local vertices = " + localVertices + " , " +
-              ", computed vertices = " + computedVertices + " , " +
+          ", messages = " + workerSentMessages +
+          ", message bytes = " + workerSentMessageBytes +
+          ", local vertices = " + localVertices +
+              ", computed vertices = " + computedVertices + ", " +
           MemoryUtils.getRuntimeMemoryStats());
     }
 
@@ -935,7 +935,7 @@ public class BspServiceWorker<I extends WritableComparable,
               localVertices, computedVertices);
     } catch (IOException e){
       if (LOG.isInfoEnabled()) {
-        LOG.info("Write the statistics into HDFS failed.");
+        LOG.info("Write the statistics into HDFS failed: " + e);
       }
     }
 
@@ -995,12 +995,17 @@ public class BspServiceWorker<I extends WritableComparable,
   private void writeIntoHDFS(long superstep, long workerSentMessages, long workerSentMessageBytes,
           long localVertices, long computedVertices) throws IOException{
     ImmutableClassesGiraphConfiguration conf = getConfiguration();
-    String hostName = conf.getLocalHostname();
+    String hostName = this.getHostname();
     String fileName = "/giraphStatistics/" + hostName;
 
+    Path dir = new Path("/giraphStatistics");
     Path path = new Path(fileName);
     FileSystem fileSystem = FileSystem.get(conf);
     FSDataOutputStream outputStream;
+    if (fileSystem.exists(dir) && (superstep == -1)) {
+      fileSystem.delete(dir, true);
+    }
+
     if(!fileSystem.exists(path)){
       outputStream = fileSystem.create(path);
       outputStream.writeUTF("superstep\tSentMessages\tSentMessageBytes\tlocalVertices\tcomputedVertices\n");
