@@ -140,11 +140,9 @@ public class GiraphTimers extends HadoopCountersBase {
    * Get counter for superstep time in milliseconds
    *
    * @param superstep Integer superstep number.
-   * @param computationName Name of the computation for display (may be null)
    * @return Counter for setup time in milliseconds
    */
-  public GiraphHadoopCounter getSuperstepStartMs(long superstep,
-                                            String computationName) {
+  public GiraphHadoopCounter getSuperstepStartMs(long superstep) {
     GiraphHadoopCounter counter = superstepStartMsec.get(superstep);
     if (counter == null) {
       String counterPrefix;

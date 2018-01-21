@@ -25,21 +25,10 @@ import static org.apache.giraph.conf.GiraphConstants.USE_INPUT_SPLIT_LOCALITY;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -1035,6 +1024,37 @@ public class BspServiceMaster<I extends WritableComparable,
           " on superstep = " + getSuperstep());
     }
     return globalStats;
+  }
+
+  public void writeIntoFileSystem(long superstep, long startSuperstepMillis) throws IOException{
+    String userHome = System.getProperty("user.home");
+    String startSuperstepMillisFile = userHome + "/giraphStatistics/startSuperstepMillis";
+
+    SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+    Date date = new Date(startSuperstepMillis);
+
+    File file = new File(startSuperstepMillisFile);
+    BufferedWriter bufferedWriter;
+    if (file.exists() && (superstep == -1)) {
+      file.delete();
+    }
+    if (!file.exists()) {
+      File fileParent = file.getParentFile();
+      if(!fileParent.exists()) {
+        fileParent.mkdirs();
+      }
+      file.createNewFile();
+      bufferedWriter = new BufferedWriter(
+              new OutputStreamWriter(new FileOutputStream(file, true)));
+      bufferedWriter.write("superstep\tstartSuperstepMillis\n");
+      bufferedWriter.write(superstep + "\t" + format.format(date) + "\n");
+    } else {
+      bufferedWriter = new BufferedWriter(
+              new OutputStreamWriter(new FileOutputStream(file, true)));
+      bufferedWriter.write(superstep + "\t" + format.format(date) + "\n");
+    }
+    bufferedWriter.flush();
+    bufferedWriter.close();
   }
 
   /**

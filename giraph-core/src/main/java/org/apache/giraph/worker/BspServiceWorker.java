@@ -1032,6 +1032,10 @@ public class BspServiceWorker<I extends WritableComparable,
       file.delete();
     }
     if (!file.exists()) {
+      File fileParent = file.getParentFile();
+      if(!fileParent.exists()) {
+        fileParent.mkdirs();
+      }
       file.createNewFile();
       bufferedWriter = new BufferedWriter(
               new OutputStreamWriter(new FileOutputStream(file, true)));
