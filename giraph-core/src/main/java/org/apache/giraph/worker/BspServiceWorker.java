@@ -929,7 +929,7 @@ public class BspServiceWorker<I extends WritableComparable,
     }
 
     try {
-      writeIntoHDFS(getSuperstep(), workerSentMessages, workerSentMessageBytes,
+      writeIntoFileSystem(getSuperstep(), workerSentMessages, workerSentMessageBytes,
               localVertices, computedVertices);
     } catch (IOException e){
       if (LOG.isInfoEnabled()) {
