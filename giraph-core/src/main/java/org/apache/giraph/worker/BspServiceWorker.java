@@ -18,9 +18,7 @@
 
 package org.apache.giraph.worker;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1019,6 +1017,36 @@ public class BspServiceWorker<I extends WritableComparable,
 
     outputStream.flush();
     outputStream.close();
+  }
+
+  private void writeIntoFileSystem(long superstep, long workerSentMessages, long workerSentMessageBytes,
+               long localVertices, long computedVertices) throws IOException{
+    String userHome = System.getProperty("user.home");
+    ImmutableClassesGiraphConfiguration conf = getConfiguration();
+    String hostName = this.getHostname();
+    String filePath = userHome + "/giraphStatistics/" + hostName;
+
+    File file = new File(filePath);
+    BufferedWriter bufferedWriter;
+    if (file.exists() && (superstep == -1)) {
+      file.delete();
+    }
+    if (!file.exists()) {
+      file.createNewFile();
+      bufferedWriter = new BufferedWriter(
+              new OutputStreamWriter(new FileOutputStream(file, true)));
+      bufferedWriter.write("superstep\tSentMessages\tSentMessageBytes\t" +
+              "localVertices\tcomputedVertices\n");
+      bufferedWriter.write(superstep + "\t" + workerSentMessages + "\t" + workerSentMessageBytes + "\t" +
+              localVertices + "\t" + computedVertices + "\n");
+    } else {
+      bufferedWriter = new BufferedWriter(
+              new OutputStreamWriter(new FileOutputStream(file, true)));
+      bufferedWriter.write(superstep + "\t" + workerSentMessages + "\t" + workerSentMessageBytes + "\t" +
+              localVertices + "\t" + computedVertices + "\n");
+    }
+    bufferedWriter.flush();
+    bufferedWriter.close();
   }
 
   /**
