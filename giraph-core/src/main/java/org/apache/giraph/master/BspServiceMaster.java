@@ -1026,33 +1026,35 @@ public class BspServiceMaster<I extends WritableComparable,
     return globalStats;
   }
 
-  public void writeIntoFileSystem(long superstep, long startSuperstepMillis) throws IOException{
+  public void writeIntoFileSystem(long superstep, long startSuperstepMillis, long superstepMillis) throws IOException{
     String userHome = System.getProperty("user.home");
-    String startSuperstepMillisFile = userHome + "/giraphStatistics/startSuperstepMillis";
+    String startSuperstepMillisFile = userHome + "/giraphStatistics/master";
 
     SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
     Date date = new Date(startSuperstepMillis);
 
     File file = new File(startSuperstepMillisFile);
     BufferedWriter bufferedWriter;
-    if (file.exists() && (superstep == -1)) {
-      file.delete();
-    }
-    if (!file.exists()) {
-      File fileParent = file.getParentFile();
-      if(!fileParent.exists()) {
+
+    File fileParent = file.getParentFile();
+    if (superstep == -1) {
+      if (!fileParent.exists()){
         fileParent.mkdirs();
+      } else {
+        for (File subDir : fileParent.listFiles())
+          subDir.delete();
       }
       file.createNewFile();
       bufferedWriter = new BufferedWriter(
               new OutputStreamWriter(new FileOutputStream(file, true)));
-      bufferedWriter.write("superstep\tstartSuperstepMillis\n");
-      bufferedWriter.write(superstep + "\t" + format.format(date) + "\n");
+      bufferedWriter.write("superstep\tstartSuperstepMillis\tsuperstepMillis\n");
+      bufferedWriter.write(superstep + "\t" + format.format(date) + "\t" + superstepMillis + "\n");
     } else {
       bufferedWriter = new BufferedWriter(
               new OutputStreamWriter(new FileOutputStream(file, true)));
-      bufferedWriter.write(superstep + "\t" + format.format(date) + "\n");
+      bufferedWriter.write(superstep + "\t" + format.format(date) + "\t" + superstepMillis + "\n");
     }
+
     bufferedWriter.flush();
     bufferedWriter.close();
   }

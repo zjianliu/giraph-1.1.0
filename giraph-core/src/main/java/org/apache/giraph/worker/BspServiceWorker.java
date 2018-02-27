@@ -1028,13 +1028,14 @@ public class BspServiceWorker<I extends WritableComparable,
 
     File file = new File(filePath);
     BufferedWriter bufferedWriter;
-    if (file.exists() && (superstep == -1)) {
-      file.delete();
-    }
-    if (!file.exists()) {
-      File fileParent = file.getParentFile();
-      if(!fileParent.exists()) {
+
+    File fileParent = file.getParentFile();
+    if (superstep == -1) {
+      if (!fileParent.exists()) {
         fileParent.mkdirs();
+      } else {
+        for (File subDir : fileParent.listFiles())
+          subDir.delete();
       }
       file.createNewFile();
       bufferedWriter = new BufferedWriter(
@@ -1049,6 +1050,7 @@ public class BspServiceWorker<I extends WritableComparable,
       bufferedWriter.write(superstep + "\t" + workerSentMessages + "\t" + workerSentMessageBytes + "\t" +
               localVertices + "\t" + computedVertices + "\n");
     }
+
     bufferedWriter.flush();
     bufferedWriter.close();
   }
