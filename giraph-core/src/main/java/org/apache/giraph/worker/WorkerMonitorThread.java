@@ -115,7 +115,7 @@ public class WorkerMonitorThread<I extends WritableComparable, V extends Writabl
                 */
 
 
-                Thread.sleep(1000);
+                Thread.sleep(300);
             }
             socket.shutdownOutput();
             socket.close();

@@ -206,10 +206,12 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
       int totalNetworkup = metrics.getTotalNetworkup();
       int totalNetworkdown = metrics.getTotalNetworkdown();
 
+      /*
       LOG.info("metrics.getMemoryUsed: " + metrics.getMemoryUsed());
       LOG.info("metrics.getMemoryTotal() " + metrics.getMemoryTotal());
       LOG.info("Runtime.getRuntime().totalMemory(): " + Runtime.getRuntime().totalMemory());
       LOG.info("Runtime.getRuntime().maxMemory(): " + Runtime.getRuntime().maxMemory());
+      */
 
       status.append("giraph." + hostName + ".cpuUser " + cpuUser + " " + time + "\n");
       status.append("giraph." + hostName + ".memoryUsage " + memoryUsage + " " + time + "\n");
@@ -361,9 +363,9 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
 
     preLoadOnWorkerObservers();
 
-    LOG.debug("*****************serviceWorker.setup() starts********************");
+    LOG.info("*****************serviceWorker.setup() starts********************");
     finishedSuperstepStats = serviceWorker.setup();  //return: Finished superstep stats for the input superstep
-    LOG.debug("*****************serviceWorker.setup() ends**********************");
+    LOG.info("*****************serviceWorker.setup() ends**********************");
     if (collectInputSuperstepStats(finishedSuperstepStats)) {
       return;
     }
@@ -374,6 +376,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
     // main superstep processing loop
     while (!finishedSuperstepStats.allVerticesHalted()) {
       final long superstep = serviceWorker.getSuperstep();
+      LOG.info("============ superstep " + superstep + " starts ============");
       GiraphTimerContext superstepTimerContext =
         getTimerForThisSuperstep(superstep);
       GraphState graphState = new GraphState(superstep,
@@ -420,6 +423,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
       finishedSuperstepStats = completeSuperstepAndCollectStats(
         partitionStatsList, superstepTimerContext);
 
+      LOG.info("============ superstep " + superstep + " ends ============");
       // END of superstep compute loop
     }//while
 
