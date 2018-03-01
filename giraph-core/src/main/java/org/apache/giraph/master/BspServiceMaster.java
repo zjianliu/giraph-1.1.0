@@ -1027,13 +1027,16 @@ public class BspServiceMaster<I extends WritableComparable,
     return globalStats;
   }
 
-  public void writeIntoHDFS(Map<Long, List<Double>> superstepSecsMap) throws IOException{
-    StringBuffer output = null;
-    output.append("superstep\tstartSuperstepMillis\tsuperstepMillis\n");
-    for(Entry<Long, List<Double>> entry : superstepSecsMap.entrySet()){
+  public void writeIntoHDFS(Map<Long, List<Long>> superstepSecsMap) throws IOException{
+
+    SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+
+    StringBuffer output = new StringBuffer();
+    output.append("superstep\tstartSuperstepMillis\tsuperstepMillis(sec)\n");
+    for(Entry<Long, List<Long>> entry : superstepSecsMap.entrySet()){
       output.append(entry.getKey().longValue() + "\t"
-              + entry.getValue().get(0) + "\t"
-              + entry.getValue().get(1) + "\n");
+              + format.format(new Date(entry.getValue().get(0))) + "\t"
+              + entry.getValue().get(1)/1000d + "\n");
     }
 
     ImmutableClassesGiraphConfiguration conf = getConfiguration();

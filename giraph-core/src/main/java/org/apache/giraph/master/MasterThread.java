@@ -63,7 +63,7 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
   /** Setup seconds */
   private double setupSecs = 0d;
   /** Superstep timer (in seconds) map */
-  private final Map<Long, List<Double>> superstepSecsMap =
+  private final Map<Long, List<Long>> superstepSecsMap =
       new TreeMap();
 
   /**
@@ -97,7 +97,6 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
       long startMillis = System.currentTimeMillis();
       long initializeMillis = 0;
       long endMillis = 0;
-      ArrayList<Double> superstepTime = new ArrayList();
       bspServiceMaster.setup();
       SuperstepState superstepState = SuperstepState.INITIAL;
 
@@ -149,9 +148,9 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
             LOG.info("===============================================================");
             long superstepMillis = System.currentTimeMillis() -
                 startSuperstepMillis;
-            superstepTime.clear();
-            superstepTime.add(startSuperstepMillis / 1000d);
-            superstepTime.add(superstepMillis / 1000d);
+            ArrayList<Long> superstepTime = new ArrayList();
+            superstepTime.add(startSuperstepMillis);
+            superstepTime.add(superstepMillis);
             ((BspServiceMaster)bspServiceMaster).writeIntoFileSystem(cachedSuperstep, startSuperstepMillis, superstepMillis);
             superstepSecsMap.put(cachedSuperstep, superstepTime);
             if (LOG.isInfoEnabled()) {
@@ -191,15 +190,15 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
           LOG.info("setup: Took " + setupSecs + " seconds.");
         }
         ((BspServiceMaster)bspServiceMaster).writeIntoHDFS(superstepSecsMap);
-        for (Entry<Long, List<Double>> entry : superstepSecsMap.entrySet()) {
+        for (Entry<Long, List<Long>> entry : superstepSecsMap.entrySet()) {
           if (LOG.isInfoEnabled()) {
             if (entry.getKey().longValue() ==
                 BspService.INPUT_SUPERSTEP) {
               LOG.info("input superstep: Took " +
-                  entry.getValue().get(1) + " seconds.");
+                  entry.getValue().get(1)/1000d + " seconds.");
             } else {
               LOG.info("superstep " + entry.getKey() + ": Took " +
-                  entry.getValue().get(1) + " seconds.");
+                  entry.getValue().get(1)/1000d + " seconds.");
             }
           }
           context.progress();
