@@ -30,6 +30,8 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -61,8 +63,8 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
   /** Setup seconds */
   private double setupSecs = 0d;
   /** Superstep timer (in seconds) map */
-  private final Map<Long, Double> superstepSecsMap =
-      new TreeMap<Long, Double>();
+  private final Map<Long, List<Double>> superstepSecsMap =
+      new TreeMap();
 
   /**
    * Constructor.
@@ -95,6 +97,7 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
       long startMillis = System.currentTimeMillis();
       long initializeMillis = 0;
       long endMillis = 0;
+      ArrayList<Double> superstepTime = new ArrayList();
       bspServiceMaster.setup();
       SuperstepState superstepState = SuperstepState.INITIAL;
 
@@ -131,6 +134,8 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
               Execution halted
                   =>CHECKPOINT_AND_HALT(true);
           */
+
+          //在超步开始之前，master先完成对输入文件切块产生inputSplits
           while (!superstepState.isExecutionComplete()) {
             long startSuperstepMillis = System.currentTimeMillis();
             long cachedSuperstep = bspServiceMaster.getSuperstep();
@@ -144,9 +149,11 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
             LOG.info("===============================================================");
             long superstepMillis = System.currentTimeMillis() -
                 startSuperstepMillis;
+            superstepTime.clear();
+            superstepTime.add(startSuperstepMillis / 1000d);
+            superstepTime.add(superstepMillis / 1000d);
             ((BspServiceMaster)bspServiceMaster).writeIntoFileSystem(cachedSuperstep, startSuperstepMillis, superstepMillis);
-            superstepSecsMap.put(cachedSuperstep,
-                superstepMillis / 1000.0d);
+            superstepSecsMap.put(cachedSuperstep, superstepTime);
             if (LOG.isInfoEnabled()) {
               LOG.info("masterThread: Coordination of superstep " +
                   cachedSuperstep + " took " +
@@ -183,15 +190,16 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
         if (LOG.isInfoEnabled()) {
           LOG.info("setup: Took " + setupSecs + " seconds.");
         }
-        for (Entry<Long, Double> entry : superstepSecsMap.entrySet()) {
+        ((BspServiceMaster)bspServiceMaster).writeIntoHDFS(superstepSecsMap);
+        for (Entry<Long, List<Double>> entry : superstepSecsMap.entrySet()) {
           if (LOG.isInfoEnabled()) {
             if (entry.getKey().longValue() ==
                 BspService.INPUT_SUPERSTEP) {
               LOG.info("input superstep: Took " +
-                  entry.getValue() + " seconds.");
+                  entry.getValue().get(1) + " seconds.");
             } else {
               LOG.info("superstep " + entry.getKey() + ": Took " +
-                  entry.getValue() + " seconds.");
+                  entry.getValue().get(1) + " seconds.");
             }
           }
           context.progress();

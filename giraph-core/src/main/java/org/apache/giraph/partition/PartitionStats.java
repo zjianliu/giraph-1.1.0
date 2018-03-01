@@ -223,7 +223,8 @@ public class PartitionStats implements Writable {
   @Override
   public String toString() {
     return "(id=" + partitionId + ",vtx=" + vertexCount + ",finVtx=" +
-        finishedVertexCount + ",edges=" + edgeCount + ",msgsSent=" +
+        finishedVertexCount + ",computedVtx=" + computedVertexCount +
+            ",edges=" + edgeCount + ",msgsSent=" +
         messagesSentCount + ",msgBytesSent=" +
           messageBytesSentCount + ")";
   }

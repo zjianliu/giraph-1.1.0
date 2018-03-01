@@ -33,6 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.Map.Entry;
 
 import net.iharder.Base64;
 
@@ -1024,6 +1025,35 @@ public class BspServiceMaster<I extends WritableComparable,
           " on superstep = " + getSuperstep());
     }
     return globalStats;
+  }
+
+  public void writeIntoHDFS(Map<Long, List<Double>> superstepSecsMap) throws IOException{
+    StringBuffer output = null;
+    output.append("superstep\tstartSuperstepMillis\tsuperstepMillis\n");
+    for(Entry<Long, List<Double>> entry : superstepSecsMap.entrySet()){
+      output.append(entry.getKey().longValue() + "\t"
+              + entry.getValue().get(0) + "\t"
+              + entry.getValue().get(1) + "\n");
+    }
+
+    ImmutableClassesGiraphConfiguration conf = getConfiguration();
+    FileSystem hdfs = FileSystem.get(conf);
+
+    String dirString = "/giraphStatistics";
+    Path dir = new Path(dirString);
+    Path file = new Path(dirString + "/master");
+
+    FSDataOutputStream outputStream;
+    if (hdfs.exists(dir)) {
+      hdfs.delete(dir, true);
+    }
+    hdfs.mkdirs(dir);
+
+    outputStream = hdfs.create(file);
+    outputStream.writeUTF(output.toString());
+
+    outputStream.flush();
+    outputStream.close();
   }
 
   public void writeIntoFileSystem(long superstep, long startSuperstepMillis, long superstepMillis) throws IOException{
