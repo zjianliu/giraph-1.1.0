@@ -223,6 +223,7 @@ public class ComputeCallable<I extends WritableComparable, V extends Writable,
   private PartitionStats computePartition(
       Computation<I, V, E, M1, M2> computation,
       Partition<I, V, E> partition) throws IOException, InterruptedException {
+    int i = 0;
     PartitionStats partitionStats =
         new PartitionStats(partition.getId(), 0, 0, 0, 0, 0, 0);
     long verticesComputedProgress = 0;
@@ -270,6 +271,7 @@ public class ComputeCallable<I extends WritableComparable, V extends Writable,
     }
     WorkerProgress.get().addVerticesComputed(verticesComputedProgress);
     WorkerProgress.get().incrementPartitionsComputed();
+    LOG.info(partition.getId() + partitionStats.toString() + " " + i + " " + partition.getVertexCount());
     return partitionStats;
   }
 }
