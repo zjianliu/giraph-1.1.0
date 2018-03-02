@@ -60,7 +60,7 @@ public class HashMasterPartitioner<I extends WritableComparable,
   @Override
   public Collection<PartitionOwner> createInitialPartitionOwners(
       Collection<WorkerInfo> availableWorkerInfos, int maxWorkers) {
-    int partitionCount = PartitionUtils.computePartitionCount( //计算partition数量
+    int partitionCount = PartitionUtils.computePartitionCount( //计算partition数量 worker * worker
         availableWorkerInfos, maxWorkers, conf);
     List<PartitionOwner> ownerList = new ArrayList<PartitionOwner>();
     Iterator<WorkerInfo> workerIt = availableWorkerInfos.iterator();

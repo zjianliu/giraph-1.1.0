@@ -32,6 +32,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.TimeZone;
 
 import org.apache.giraph.bsp.BspService;
 import org.apache.giraph.bsp.CentralizedServiceMaster;
@@ -270,6 +271,9 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
    */
   public void setup(Path[] zkPathList)
     throws IOException, InterruptedException {
+    TimeZone tz = TimeZone.getTimeZone("Asia/Shanghai");
+    TimeZone.setDefault(tz);
+
     context.setStatus("setup: Beginning worker setup.");
     Configuration hadoopConf = context.getConfiguration();
     conf = new ImmutableClassesGiraphConfiguration<I, V, E>(hadoopConf);
@@ -364,7 +368,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
     preLoadOnWorkerObservers();
 
     LOG.info("*****************serviceWorker.setup() starts********************");
-    finishedSuperstepStats = serviceWorker.setup();  //return: Finished superstep stats for the input superstep
+    finishedSuperstepStats = serviceWorker.setup();  //return: Finished superstep stats for the input superstep （超步 -1）
     LOG.info("*****************serviceWorker.setup() ends**********************");
     if (collectInputSuperstepStats(finishedSuperstepStats)) {
       return;
@@ -373,7 +377,7 @@ public class GraphTaskManager<I extends WritableComparable, V extends Writable,
     List<PartitionStats> partitionStatsList = new ArrayList<PartitionStats>();
     int numComputeThreads = conf.getNumComputeThreads();
 
-    // main superstep processing loop
+    // main superstep processing loop from superstep 0
     while (!finishedSuperstepStats.allVerticesHalted()) {
       final long superstep = serviceWorker.getSuperstep();
       LOG.info("============ superstep " + superstep + " starts ============");

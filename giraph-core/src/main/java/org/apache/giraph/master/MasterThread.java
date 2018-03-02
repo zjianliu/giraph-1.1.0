@@ -141,7 +141,7 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
             GiraphMetrics.get().resetSuperstepMetrics(cachedSuperstep);
             Class<? extends Computation> computationClass =
                 bspServiceMaster.getMasterCompute().getComputation();
-            LOG.info("===============================================================");
+            LOG.info("==============================================================="); //从superstep -1 开始
             LOG.info("The superstep " + cachedSuperstep + " starts....");
             superstepState = bspServiceMaster.coordinateSuperstep(); //同步一个超步
             LOG.info("The superstep " + cachedSuperstep + " ends....");
@@ -151,7 +151,7 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
             ArrayList<Long> superstepTime = new ArrayList();
             superstepTime.add(startSuperstepMillis);
             superstepTime.add(superstepMillis);
-            ((BspServiceMaster)bspServiceMaster).writeIntoFileSystem(cachedSuperstep, startSuperstepMillis, superstepMillis);
+            //((BspServiceMaster)bspServiceMaster).writeIntoFileSystem(cachedSuperstep, startSuperstepMillis, superstepMillis);
             superstepSecsMap.put(cachedSuperstep, superstepTime);
             if (LOG.isInfoEnabled()) {
               LOG.info("masterThread: Coordination of superstep " +
@@ -189,7 +189,9 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
         if (LOG.isInfoEnabled()) {
           LOG.info("setup: Took " + setupSecs + " seconds.");
         }
+
         ((BspServiceMaster)bspServiceMaster).writeIntoHDFS(superstepSecsMap);
+
         for (Entry<Long, List<Long>> entry : superstepSecsMap.entrySet()) {
           if (LOG.isInfoEnabled()) {
             if (entry.getKey().longValue() ==

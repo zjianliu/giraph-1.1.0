@@ -1032,7 +1032,7 @@ public class BspServiceMaster<I extends WritableComparable,
     SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 
     StringBuffer output = new StringBuffer();
-    output.append("superstep\tstartSuperstepMillis\tsuperstepMillis(sec)\n");
+    output.append("\nsuperstep\tstartSuperstepMillis\tsuperstepMillis(sec)\n");
     for(Entry<Long, List<Long>> entry : superstepSecsMap.entrySet()){
       output.append(entry.getKey().longValue() + "\t"
               + format.format(new Date(entry.getValue().get(0))) + "\t"

@@ -125,6 +125,7 @@ public class GlobalStats implements Writable {
   public void readFields(DataInput input) throws IOException {
     vertexCount = input.readLong();
     finishedVertexCount = input.readLong();
+    computedVertexCount = input.readLong();
     edgeCount = input.readLong();
     messageCount = input.readLong();
     messageBytesCount = input.readLong();
@@ -140,6 +141,7 @@ public class GlobalStats implements Writable {
   public void write(DataOutput output) throws IOException {
     output.writeLong(vertexCount);
     output.writeLong(finishedVertexCount);
+    output.writeLong(computedVertexCount);
     output.writeLong(edgeCount);
     output.writeLong(messageCount);
     output.writeLong(messageBytesCount);
