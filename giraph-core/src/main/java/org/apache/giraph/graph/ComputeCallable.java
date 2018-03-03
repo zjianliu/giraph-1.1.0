@@ -151,6 +151,8 @@ public class ComputeCallable<I extends WritableComparable, V extends Writable,
       Partition<I, V, E> partition =
           serviceWorker.getPartitionStore().getOrCreatePartition(partitionId);
 
+      LOG.info("Partition status: " + partition.getVertexCount());
+
       Computation<I, V, E, M1, M2> computation =
           (Computation<I, V, E, M1, M2>) configuration.createComputation();
       computation.initialize(graphState, workerClientRequestProcessor,
